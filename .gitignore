@@ -1,0 +1,43 @@
+# ===== Visual Studio / C++ =====
+.vs/
+x64/
+x86/
+Debug/
+Release/
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.sdf
+*.opensdf
+*.VC.db
+*.VC.opendb
+*.ipch
+*.pdb
+*.ilk
+*.idb
+*.tlog
+*.lastbuildstate
+*.log
+*.aps
+
+# ===== CMake =====
+build/
+out/
+CMakeFiles/
+CMakeCache.txt
+cmake-build-*/
+
+# ===== IDE / OS =====
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# ===== Office 임시 파일 =====
+~$*
+*.tmp
+
+# ===== 강의 자료 (공개 레포에 올리지 않음) =====
+2026-2 컴그 최종 프로젝트.pdf
