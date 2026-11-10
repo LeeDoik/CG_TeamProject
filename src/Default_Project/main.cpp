@@ -371,7 +371,7 @@ void DrawScene(GLFWwindow* window)
 
 		// 현재 그리려는 카메라 객체를 전달하여 렌더링
 		for (auto& obj : renderQueue) {
-			obj->Render(cam);
+			if (obj->isValid) obj->Render(cam);
 		}
 	}
 

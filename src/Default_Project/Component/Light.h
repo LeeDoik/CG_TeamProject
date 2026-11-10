@@ -10,7 +10,17 @@ public:
 	vec4 lightColor = vec4{ 1.0f, 1.0f, 1.0f, 1.0f };
 	float intensity = 1.0f;
 
-	void Update(float deltaTime) override;
+	// 거리 감쇠(Attenuation) 파라미터
+	float constant = 1.0f;
+	float linear = 0.09f;
+	float quadratic = 0.032f;
+
+	// 스팟 라이트 원뿔 각도 (단위: Degree)
+	float cutOff = 12.5f;        // 내부 밝은 영역 각도
+	float outerCutOff = 15.0f;   // 빛이 완전히 사라지는 외부 영역 각도
+
+	Light() = default;
+	void Awake() override;
 
 	static Component* CreateFromJson(Object* obj, const json& props, const map<string, Object*>& spawnedObjects);
 };

@@ -37,40 +37,49 @@ void MeshRenderer3D::Render(Camera* activeCamera) {
 			GLuint projLoc = glGetUniformLocation(material->shaderProgram, "proj");
 			glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(activeCamera->GetProjectionMatrix()));
 
-			//Phong 모델을 위한 카메라의 월드 위치(viewPos) 전달
+			//카메라의 월드 위치(viewPos) 전달
 			Transform* camTr = activeCamera->gameObject->GetComponent<Transform>();
 			GLuint viewPosLoc = glGetUniformLocation(material->shaderProgram, "viewPos");
 			glUniform3fv(viewPosLoc, 1, value_ptr(camTr->worldPosition));
 		}
 
-		//씬(Hierarchy)에서 Light 컴포넌트 탐색 및 조명 정보 전달
-		Light* sceneLight = nullptr;
-		Transform* lightTr = nullptr;
-		for (const auto& obj : gameObject->ctx.Hierarchy) {
-			if (!obj->isValid) continue;
-			sceneLight = obj->GetComponent<Light>();
-			if (sceneLight != nullptr) {
-				lightTr = obj->GetComponent<Transform>();
-				break; // 첫 번째 조명을 찾으면 루프 종료
-			}
-		}
+		//1. 씬에 등록된 라이트 개수를 먼저 전달
+		const auto& lights = gameObject->ctx.lights;
+		int numLights = std::min(static_cast<int>(lights.size()), 10); // 셰이더 한계인 10개로 제한
+		glUniform1i(glGetUniformLocation(material->shaderProgram, "numLights"), numLights);
 
-		// Uniform 위치 가져오기 및 값 전달 로직
-		GLuint lightDirLoc = glGetUniformLocation(material->shaderProgram, "lightDir");
-		GLuint lightColorLoc = glGetUniformLocation(material->shaderProgram, "lightColor");
+		//2. 배열을 순회하며 각 광원 정보 전달
+		for (int i = 0; i < numLights; ++i) {
+			Light* sceneLight = lights[i];
+			Transform* lightTr = sceneLight->gameObject->GetComponent<Transform>();
+			if (lightTr == nullptr) continue;
 
-		if (sceneLight != nullptr && lightTr != nullptr) {
-			// 💡 Unity 스타일 Directional Light: position 무시, rotation만 반영
-			// 라이트 오브젝트의 로컬 전방 벡터(0, 0, -1)에 월드 회전 행렬을 곱하여 방향 추출 (w=0으로 평행이동 차단)
-			vec3 lightDir = normalize(vec3(lightTr->worldMatrix * vec4(0.0f, 0.0f, -1.0f, 0.0f)));
+			// GLSL 배열 인덱스 문자열 생성 (예: "lights[0].color")
+			string baseName = "lights[" + to_string(i) + "].";
+
+			// 공통 속성 전달 (타입, 색상, 방향)
+			int typeInt = static_cast<int>(sceneLight->lightType);
 			vec3 finalLightColor = vec3(sceneLight->lightColor) * sceneLight->intensity;
+			vec3 lightDir = normalize(vec3(lightTr->worldMatrix * vec4(0.0f, 0.0f, -1.0f, 0.0f)));
 
-			glUniform3fv(lightDirLoc, 1, value_ptr(lightDir));
-			glUniform3fv(lightColorLoc, 1, value_ptr(finalLightColor));
-		}
-		else {
-			glUniform3f(lightDirLoc, 0.0f, 0.0f, -1.0f);
-			glUniform3f(lightColorLoc, 1.0f, 1.0f, 1.0f);
+			glUniform1i(glGetUniformLocation(material->shaderProgram, (baseName + "type").c_str()), typeInt);
+			glUniform3fv(glGetUniformLocation(material->shaderProgram, (baseName + "color").c_str()), 1, value_ptr(finalLightColor));
+			glUniform3fv(glGetUniformLocation(material->shaderProgram, (baseName + "direction").c_str()), 1, value_ptr(lightDir));
+
+			// Point, Spot 속성 전달 (위치, 감쇠값)
+			if (sceneLight->lightType == LightType::Spot || sceneLight->lightType == LightType::Point) {
+				vec3 lightPos = vec3(lightTr->worldMatrix[3]); // Transform 4번째 열(위치값)
+				glUniform3fv(glGetUniformLocation(material->shaderProgram, (baseName + "position").c_str()), 1, value_ptr(lightPos));
+
+				glUniform1f(glGetUniformLocation(material->shaderProgram, (baseName + "constant").c_str()), sceneLight->constant);
+				glUniform1f(glGetUniformLocation(material->shaderProgram, (baseName + "linear").c_str()), sceneLight->linear);
+				glUniform1f(glGetUniformLocation(material->shaderProgram, (baseName + "quadratic").c_str()), sceneLight->quadratic);
+
+				if (sceneLight->lightType == LightType::Spot) {
+					glUniform1f(glGetUniformLocation(material->shaderProgram, (baseName + "cutOff").c_str()), glm::cos(glm::radians(sceneLight->cutOff)));
+					glUniform1f(glGetUniformLocation(material->shaderProgram, (baseName + "outerCutOff").c_str()), glm::cos(glm::radians(sceneLight->outerCutOff)));
+				}
+			}
 		}
 
 		//Pass1 : 외곽선 렌더링 처리
