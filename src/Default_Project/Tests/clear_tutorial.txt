@@ -1,0 +1,30 @@
+# 튜토리얼 전체 클리어
+0.5 D down
+1.2 SPACE down
+1.5 SPACE up
+2.8 SPACE down
+3.3 SPACE up
+4.6 D up
+# 벽: 3D로 안쪽 길
+4.8 E down
+4.9 E up
+5.6 W down
+6.4 W up
+6.5 D down
+7.5 D up
+7.7 E down
+7.8 E up
+# 떨어진 발판: 2D로 그대로 건너기 → 큰 상자 앞까지
+8.5 D down
+13.6 D up
+# 큰 상자: 3D로 뒤쪽 돌아가기
+13.8 E down
+13.9 E up
+14.6 D down
+16.0 D up
+16.2 E down
+16.3 E up
+# 페이지 조각
+17.0 D down
+17.8 D up
+21.0 quit

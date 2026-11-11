@@ -1,0 +1,50 @@
+# 스테이지 1 전체 클리어 (POPUP_LEVEL=Levels/stage1.txt 로 실행)
+0.5 D down
+1.3 SPACE down
+1.75 SPACE up
+2.2 SPACE down
+2.6 SPACE up
+2.8 SPACE down
+3.2 SPACE up
+3.4 SPACE down
+3.8 SPACE up
+4.0 SPACE down
+4.4 SPACE up
+4.65 SPACE down
+5.05 SPACE up
+5.95 D up
+# 선반 끝에서 살짝 걸어 나가 수직으로 떨어지기
+6.1 D down
+6.35 D up
+# 가시: 3D로 안쪽 길
+7.3 E down
+7.4 E up
+8.1 W down
+8.9 W up
+9.0 D down
+11.1 D up
+11.3 E down
+11.4 E up
+# 움직이는 발판: 2D로 점프해 올라타고 건너기
+12.1 D down
+12.95 SPACE down
+13.35 SPACE up
+14.7 SPACE down
+15.1 SPACE up
+16.1 D up
+# 긴 벽: 3D → 틈에서 2D로 게이지 충전 → 3D → 2D
+16.3 E down
+16.4 E up
+17.0 D down
+19.65 D up
+19.8 E down
+19.9 E up
+22.0 E down
+22.1 E up
+22.7 D down
+25.5 D up
+25.6 E down
+25.7 E up
+26.4 D down
+27.3 D up
+30.0 quit

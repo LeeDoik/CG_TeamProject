@@ -44,6 +44,14 @@
     <ClInclude Include="Data_Structure\ScreenSize.h" />
     <ClInclude Include="Data_Structure\Vertex.h" />
     <ClInclude Include="Default_Scene.h" />
+    <ClInclude Include="Game\GameTypes.h" />
+    <ClInclude Include="Game\CoreRules.h" />
+    <ClInclude Include="Game\LevelLoader.h" />
+    <ClInclude Include="Game\OnTopRenderer.h" />
+    <ClInclude Include="Game\GameManager.h" />
+    <ClInclude Include="Game\HudRenderer.h" />
+    <ClInclude Include="Game\StageScene.h" />
+    <ClInclude Include="Game\DebugTools.h" />
     <ClInclude Include="Script\SceneCamera.h" />
     <ClInclude Include="Script\TestScript.h" />
     <ClInclude Include="Utility\ColliderManager.h" />
@@ -67,6 +75,13 @@
     <ClCompile Include="Data_Structure\Object.cpp" />
     <ClCompile Include="Data_Structure\Scene.cpp" />
     <ClCompile Include="Default_Scene.cpp" />
+    <ClCompile Include="Game\CoreRules.cpp" />
+    <ClCompile Include="Game\LevelLoader.cpp" />
+    <ClCompile Include="Game\OnTopRenderer.cpp" />
+    <ClCompile Include="Game\GameManager.cpp" />
+    <ClCompile Include="Game\HudRenderer.cpp" />
+    <ClCompile Include="Game\StageScene.cpp" />
+    <ClCompile Include="Game\DebugTools.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Script\SceneCamera.cpp" />
     <ClCompile Include="Script\TestScript.cpp" />
@@ -77,6 +92,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Default_Scene.json" />
+    <None Include="Levels\tutorial.txt" />
+    <None Include="Levels\stage1.txt" />
+    <None Include="Shader\Hud_vertex.glsl" />
+    <None Include="Shader\Hud_fragment.glsl" />
     <None Include="Shader\Debug_fragment.glsl" />
     <None Include="Shader\Debug_vertex.glsl" />
     <None Include="Shader\LocalPosColor_fragment.glsl" />
@@ -98,12 +117,14 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset Condition="'$(VisualStudioVersion)'=='17.0'">v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset Condition="'$(VisualStudioVersion)'=='17.0'">v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -111,16 +132,19 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset Condition="'$(VisualStudioVersion)'=='17.0'">v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset Condition="'$(VisualStudioVersion)'=='17.0'">v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="OpenGL.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Label="Shared">
@@ -139,7 +163,10 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>Component;Data_Structure;Script;Utility;$(IncludePath)</IncludePath>
+    <IncludePath>Component;Data_Structure;Script;Utility;Game;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>Component;Data_Structure;Script;Utility;Game;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

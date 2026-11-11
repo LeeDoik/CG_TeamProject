@@ -3,6 +3,7 @@ using namespace std;
 
 /////////////씬 임포트/////////////
 #include "Default_Scene.h"
+#include "StageScene.h"
 ///////////////////////////////////
 
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -37,6 +38,16 @@ int main(int argc, char** argv) {
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	//윈도우 생성
+	//[Game] 테스트용: 환경 변수 POPUP_HEADLESS가 있으면 창을 숨긴 채 실행한다 (Game/DebugTools.h 참고)
+	{
+		char* headless = nullptr;
+		size_t headlessLen = 0;
+		if (_dupenv_s(&headless, &headlessLen, "POPUP_HEADLESS") == 0 && headless) {
+			glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
+			free(headless);
+		}
+	}
+
 	GLFWwindow* window = glfwCreateWindow(screenSize.width, screenSize.height, "OpenGL Window", nullptr, nullptr);
 	if (!window) {
 		cerr << "윈도우 생성 실패" << endl;
@@ -147,8 +158,12 @@ int main(int argc, char** argv) {
 
 	/////////////////////////씬 로드/////////////////////////
 
-	Default_Scene defaultScene{screenSize};
-	defaultScene.LoadScene(ctx);
+	//Default_Scene defaultScene{screenSize};
+	//defaultScene.LoadScene(ctx);
+
+	//팝업북 게임 씬 (Game/StageScene)
+	StageScene stageScene{ screenSize };
+	stageScene.LoadScene(ctx);
 
 	////////////////////////메인 루프////////////////////////
 

@@ -239,4 +239,81 @@
       <Filter>리소스 파일</Filter>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Game">
+      <UniqueIdentifier>{4ea07190-6657-4882-b2a0-570377aeeea7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\Header">
+      <UniqueIdentifier>{0e299ccf-50bc-4185-86ee-c33b3f1a75eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game\Source">
+      <UniqueIdentifier>{ea6126d2-3b48-4e41-87c3-52e1aa7ad270}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Levels">
+      <UniqueIdentifier>{1a3c1fda-f470-4fed-93e8-887620e9bf77}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Game\GameTypes.h">
+      <Filter>Game\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\CoreRules.h">
+      <Filter>Game\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\LevelLoader.h">
+      <Filter>Game\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\OnTopRenderer.h">
+      <Filter>Game\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\GameManager.h">
+      <Filter>Game\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\HudRenderer.h">
+      <Filter>Game\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\StageScene.h">
+      <Filter>Game\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\DebugTools.h">
+      <Filter>Game\Header</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Game\CoreRules.cpp">
+      <Filter>Game\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\LevelLoader.cpp">
+      <Filter>Game\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\OnTopRenderer.cpp">
+      <Filter>Game\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\GameManager.cpp">
+      <Filter>Game\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\HudRenderer.cpp">
+      <Filter>Game\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\StageScene.cpp">
+      <Filter>Game\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\DebugTools.cpp">
+      <Filter>Game\Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Levels\tutorial.txt">
+      <Filter>Levels</Filter>
+    </None>
+    <None Include="Levels\stage1.txt">
+      <Filter>Levels</Filter>
+    </None>
+    <None Include="Shader\Hud_vertex.glsl">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="Shader\Hud_fragment.glsl">
+      <Filter>Shader</Filter>
+    </None>
+  </ItemGroup>
 </Project>

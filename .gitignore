@@ -41,3 +41,12 @@ Desktop.ini
 
 # ===== 강의 자료 (공개 레포에 올리지 않음) =====
 2026-2 컴그 최종 프로젝트.pdf
+
+# ===== 수업 OpenGL 라이브러리 (src/Default_Project/dependencies) =====
+# 위의 [Bb]in/ · x64/ 규칙이 라이브러리 폴더까지 막지 않도록 다시 포함한다
+!src/Default_Project/dependencies/bin/
+!src/Default_Project/dependencies/bin/x64/
+!src/Default_Project/dependencies/lib/x64/
+
+# ===== 게임 스크린샷 (F12) =====
+src/Default_Project/Screenshots/
