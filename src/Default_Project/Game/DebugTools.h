@@ -16,7 +16,7 @@ bool SaveScreenshotBMP(const std::string& path, int width, int height);
 // 실제 키보드를 쓰지 않으므로 창을 숨긴 채(POPUP_HEADLESS) 자동으로 플레이 테스트를 돌릴 수 있다.
 //   스크립트 한 줄:  시간(초)  키  down|up      예) 1.5 D down
 //                    시간(초)  quit             예) 20 quit
-//   키 이름: A D W S E SPACE R F1 F2
+//   키 이름: A D W S E SPACE R M ESC ENTER UP DOWN F1~F4
 class InputReplay {
 public:
 	bool active = false;

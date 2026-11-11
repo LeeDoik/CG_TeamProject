@@ -309,10 +309,48 @@
     <None Include="Levels\stage1.txt">
       <Filter>Levels</Filter>
     </None>
+    <None Include="Levels\stage2.txt">
+      <Filter>Levels</Filter>
+    </None>
+    <None Include="Levels\stage3.txt">
+      <Filter>Levels</Filter>
+    </None>
     <None Include="Shader\Hud_vertex.glsl">
       <Filter>Shader</Filter>
     </None>
     <None Include="Shader\Hud_fragment.glsl">
+      <Filter>Shader</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Game\FadeRenderer.h">
+      <Filter>Game\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\ProceduralTextures.h">
+      <Filter>Game\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\Sound.h">
+      <Filter>Game\Header</Filter>
+    </ClInclude>
+    <ClCompile Include="Game\FadeRenderer.cpp">
+      <Filter>Game\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\ProceduralTextures.cpp">
+      <Filter>Game\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\Sound.cpp">
+      <Filter>Game\Source</Filter>
+    </ClCompile>
+    <None Include="Shader\Paper_fragment.glsl">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="Shader\Paper_vertex.glsl">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="Shader\Sprite_vertex.glsl">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="Shader\Sprite_fragment.glsl">
       <Filter>Shader</Filter>
     </None>
   </ItemGroup>

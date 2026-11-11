@@ -3,7 +3,7 @@
 #include <vector>
 #include "GameTypes.h"
 
-// 레벨 파일(Levels/*.txt): 한 줄에 객체 하나. 형식은 docs/스테이지1_구성.md 참고.
+// 레벨 파일(Levels/*.txt): 한 줄에 객체 하나. 형식은 docs/게임_구성.md 참고.
 struct LevelBlock { vec3 center{ 0.0f }; vec3 size{ 1.0f }; std::string material; };
 struct LevelMover { vec3 center{ 0.0f }; vec3 size{ 1.0f }; std::string material; vec3 amplitude{ 0.0f }; float period = 1.0f; };
 struct LevelWorm { vec3 foot{ 0.0f }; float range = 1.0f; float speed = 1.0f; };

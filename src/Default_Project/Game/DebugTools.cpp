@@ -52,8 +52,9 @@ bool SaveScreenshotBMP(const string& path, int width, int height) {
 bool InputReplay::Load(const string& path) {
 	static const map<string, int> keys = {
 		{ "A", GLFW_KEY_A }, { "D", GLFW_KEY_D }, { "W", GLFW_KEY_W }, { "S", GLFW_KEY_S },
-		{ "E", GLFW_KEY_E }, { "SPACE", GLFW_KEY_SPACE }, { "R", GLFW_KEY_R },
-		{ "F1", GLFW_KEY_F1 }, { "F2", GLFW_KEY_F2 } };
+		{ "E", GLFW_KEY_E }, { "SPACE", GLFW_KEY_SPACE }, { "R", GLFW_KEY_R }, { "M", GLFW_KEY_M },
+		{ "ESC", GLFW_KEY_ESCAPE }, { "ENTER", GLFW_KEY_ENTER }, { "UP", GLFW_KEY_UP }, { "DOWN", GLFW_KEY_DOWN },
+		{ "F1", GLFW_KEY_F1 }, { "F2", GLFW_KEY_F2 }, { "F3", GLFW_KEY_F3 }, { "F4", GLFW_KEY_F4 } };
 
 	ifstream in(path);
 	if (!in) {

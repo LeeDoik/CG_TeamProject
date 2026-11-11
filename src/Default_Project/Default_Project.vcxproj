@@ -52,6 +52,9 @@
     <ClInclude Include="Game\HudRenderer.h" />
     <ClInclude Include="Game\StageScene.h" />
     <ClInclude Include="Game\DebugTools.h" />
+    <ClInclude Include="Game\FadeRenderer.h" />
+    <ClInclude Include="Game\ProceduralTextures.h" />
+    <ClInclude Include="Game\Sound.h" />
     <ClInclude Include="Script\SceneCamera.h" />
     <ClInclude Include="Script\TestScript.h" />
     <ClInclude Include="Utility\ColliderManager.h" />
@@ -82,6 +85,9 @@
     <ClCompile Include="Game\HudRenderer.cpp" />
     <ClCompile Include="Game\StageScene.cpp" />
     <ClCompile Include="Game\DebugTools.cpp" />
+    <ClCompile Include="Game\FadeRenderer.cpp" />
+    <ClCompile Include="Game\ProceduralTextures.cpp" />
+    <ClCompile Include="Game\Sound.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Script\SceneCamera.cpp" />
     <ClCompile Include="Script\TestScript.cpp" />
@@ -94,8 +100,14 @@
     <None Include="Default_Scene.json" />
     <None Include="Levels\tutorial.txt" />
     <None Include="Levels\stage1.txt" />
+    <None Include="Levels\stage2.txt" />
+    <None Include="Levels\stage3.txt" />
     <None Include="Shader\Hud_vertex.glsl" />
     <None Include="Shader\Hud_fragment.glsl" />
+    <None Include="Shader\Paper_fragment.glsl" />
+    <None Include="Shader\Paper_vertex.glsl" />
+    <None Include="Shader\Sprite_vertex.glsl" />
+    <None Include="Shader\Sprite_fragment.glsl" />
     <None Include="Shader\Debug_fragment.glsl" />
     <None Include="Shader\Debug_vertex.glsl" />
     <None Include="Shader\LocalPosColor_fragment.glsl" />

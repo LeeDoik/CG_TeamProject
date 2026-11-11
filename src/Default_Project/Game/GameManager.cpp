@@ -1,7 +1,9 @@
 ﻿#include "GameManager.h"
 #include "CoreRules.h"
 #include "OnTopRenderer.h"
+#include "FadeRenderer.h"
 #include "HudRenderer.h"
+#include "Sound.h"
 #include "Object.h"
 #include "Transform.h"
 #include "Camera.h"
@@ -15,6 +17,7 @@
 #include <gl/glm/gtc/quaternion.hpp>
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
@@ -50,20 +53,52 @@ namespace {
 	const float kOrthoHalfHeight = 5.6f;           // 2D 화면 세로 절반 (블록 칸 수)
 	const vec3 kCamOffset3D{ 0.0f, 8.03f, 9.73f }; // 3D: 비스듬한 고정 각도. 바라보는 점까지 약 12 → 화각 약 50도
 
-	const char* kTutorialFile = "Levels/tutorial.txt";
-	const char* kStage1File = "Levels/stage1.txt";
+	// 스테이지 순서 (F1~F4로 바로 가기)
+	const char* kStageFiles[] = { "Levels/tutorial.txt", "Levels/stage1.txt", "Levels/stage2.txt", "Levels/stage3.txt" };
+
+	// 종이 인형 그림(128x192)에서 발끝이 충돌 상자 바닥에 오도록 맞춘 사각형 크기·위치
+	const vec3 kDollQuadScale{ 0.914f, 1.371f, 1.0f };
+	const vec3 kDollQuadOffset{ 0.0f, 0.028f, 0.0f };
 
 	vec3 HalfSize() { return kPlayerSize * 0.5f; }
 	float Rand(float a, float b) { return a + (b - a) * (static_cast<float>(rand()) / RAND_MAX); }
 
+	// 배경 배치용: 같은 레벨이면 늘 같은 모양이 나오는 의사 난수
+	float Hash01(int i, int seed) {
+		uint32_t h = static_cast<uint32_t>(i) * 2654435761u ^ static_cast<uint32_t>(seed) * 40503u;
+		h = (h ^ (h >> 15)) * 2246822519u;
+		h ^= h >> 13;
+		return (h & 0xFFFF) / 65535.0f;
+	}
+
 	// 카메라 오브젝트의 앞(+z)이 dir을 보게 하는 회전 (엔진 Camera는 로컬 +z를 앞으로 쓴다)
 	quat LookRotation(vec3 dir) { return quatLookAtRH(-normalize(dir), vec3(0.0f, 1.0f, 0.0f)); }
+
+	// 선분 a→b가 상자를 지나는지 (반투명 벽 판정)
+	bool SegmentHitsBox(vec3 a, vec3 b, const Box& box) {
+		vec3 d = b - a;
+		float t0 = 0.0f, t1 = 1.0f;
+		for (int i = 0; i < 3; ++i) {
+			if (std::abs(d[i]) < 1e-6f) {
+				if (a[i] < box.min[i] || a[i] > box.max[i]) return false;
+				continue;
+			}
+			float tn = (box.min[i] - a[i]) / d[i], tf = (box.max[i] - a[i]) / d[i];
+			if (tn > tf) std::swap(tn, tf);
+			t0 = std::max(t0, tn);
+			t1 = std::min(t1, tf);
+			if (t0 > t1) return false;
+		}
+		return true;
+	}
 }
 
 int GameManager::GetMaxHp() const { return kMaxHp; }
 int GameManager::GetTotalFragments() const { return kTotalFragments; }
+bool GameManager::IsMuted() const { return Sound::IsMuted(); }
 
 GameManager::~GameManager() {
+	Sound::Shutdown();
 	if (instance == this) instance = nullptr;
 }
 
@@ -72,7 +107,7 @@ void GameManager::Awake() {
 }
 
 void GameManager::Start() {
-	// 테스트용 환경 변수: 첫 레벨 바꾸기, 입력 재생, 상태 로그
+	// 테스트용 환경 변수: 첫 레벨 바꾸기, 입력 재생, 상태 로그, 자동 캡처
 	string levelOverride = GetEnvVar("POPUP_LEVEL");
 	if (!levelOverride.empty()) firstLevel = levelOverride;
 	string replayFile = GetEnvVar("POPUP_REPLAY");
@@ -84,8 +119,15 @@ void GameManager::Start() {
 	}
 	sort(captureTimes.begin(), captureTimes.end());
 
+	bool headless = !GetEnvVar("POPUP_HEADLESS").empty();
+	Sound::Init(headless || !GetEnvVar("POPUP_MUTE").empty());
+
 	CreatePersistentObjects();
-	LoadLevel(firstLevel, true);
+
+	// 테스트(레벨 지정·입력 재생)는 타이틀을 건너뛰고 바로 시작한다
+	if (!levelOverride.empty() || replay.active) StartGame(firstLevel);
+	else GoToTitle();
+	Sound::PlayMusic();
 }
 
 // ======================================================================
@@ -144,26 +186,19 @@ void GameManager::CreatePersistentObjects() {
 	fillLight->intensity = 0.25f;
 	fill->GetComponent<Transform>()->SetLocalRotation(quatLookAtRH(normalize(vec3(0.6f, 0.35f, 0.5f)), vec3(0.0f, 1.0f, 0.0f)));
 
-	// 종이 인형: 얇은 몸·머리 + 빨간 목도리 + 앞뒤 눈. 2D에서는 OnTopRenderer로 맨 앞에 그린다.
+	// 종이 인형: 투명 배경 그림을 붙인 앞뒤 사각형 (알파 테스트). 2D에서는 OnTopRenderer로 맨 앞에 그린다.
 	playerRoot = Spawn("Player", false);
-	Transform* rootTr = playerRoot->GetComponent<Transform>();
-	auto part = [&](const string& n, vec3 localPos, vec3 size, const string& mat) {
-		Object* o = Spawn(n, false);
-		Transform* t = o->GetComponent<Transform>();
-		t->SetParent(rootTr);
-		t->SetLocalScale(size.x, size.y, size.z);
-		t->SetLocalPosition(localPos);
-		playerRenderers.push_back(o->AddComponent<OnTopRenderer>(meshChache["FlatCube"], GetMaterial(mat)));
-	};
-	part("Player_Body", vec3(0.0f, -0.15f, 0.0f), vec3(0.7f, 0.9f, 0.1f), "PlayerPaper");
-	part("Player_Head", vec3(0.0f, 0.33f, 0.0f), vec3(0.56f, 0.5f, 0.1f), "PlayerPaper");
-	part("Player_Scarf", vec3(0.0f, 0.08f, 0.0f), vec3(0.74f, 0.14f, 0.14f), "Scarf");
-	part("Player_EyeFront", vec3(0.13f, 0.38f, 0.055f), vec3(0.08f, 0.1f, 0.02f), "Ink");
-	part("Player_EyeBack", vec3(0.13f, 0.38f, -0.055f), vec3(0.08f, 0.1f, 0.02f), "Ink");
+	Object* doll = Spawn("Player_Doll", false);
+	Transform* dollTr = doll->GetComponent<Transform>();
+	dollTr->SetParent(playerRoot->GetComponent<Transform>());
+	dollTr->SetLocalScale(kDollQuadScale.x, kDollQuadScale.y, kDollQuadScale.z);
+	dollTr->SetLocalPosition(kDollQuadOffset);
+	playerRenderers.push_back(doll->AddComponent<OnTopRenderer>(meshChache["SpriteQuad"], GetMaterial("DollSprite")));
 
-	// 3D 발밑 그림자. 지금은 불투명한 납작한 구 (반투명 처리는 직접 작성할 알파 작업)
+	// 3D 발밑 반투명 그림자
 	shadow = Spawn("Player_Shadow", false);
-	shadow->AddComponent<MeshRenderer3D>(meshChache["Sphere"], GetMaterial("Shadow"));
+	shadowRenderer = shadow->AddComponent<FadeRenderer>(meshChache["Sphere"], GetMaterial("Shadow"));
+	shadowRenderer->alpha = 0.45f;
 	shadow->GetComponent<Transform>()->SetLocalScale(0.38f, 0.015f, 0.26f);
 	shadow->isValid = false;
 
@@ -187,9 +222,13 @@ void GameManager::ClearLevel() {
 	worms.clear();
 	checkpoints.clear();
 	pickups.clear();
+	backdrops.clear();
+	level = LevelData{};
+	currentFile.clear();
 }
 
-void GameManager::LoadLevel(const string& file, bool resetHp) {
+// file은 복사해서 받는다: LoadLevel(currentFile, ...)처럼 부르면 ClearLevel이 currentFile을 지우기 때문
+void GameManager::LoadLevel(string file, bool resetHp) {
 	LevelData data;
 	if (!LoadLevelFile(file, data)) return; // 못 읽으면 지금 레벨 유지
 
@@ -197,18 +236,26 @@ void GameManager::LoadLevel(const string& file, bool resetHp) {
 	level = data;
 	currentFile = file;
 
-	for (const auto& b : level.blocks) {
+	// 발판·벽: 카메라를 가리면 반투명해지도록 FadeRenderer를 붙인다
+	auto spawnSolid = [&](const string& name, vec3 center, vec3 size, const string& material) {
 		Solid s;
-		s.obj = SpawnCube("Block", b.center, b.size, b.material.empty() ? "Paper" : b.material, true);
-		s.base = s.center = b.center;
-		s.size = b.size;
-		solids.push_back(s);
+		s.obj = Spawn(name, true);
+		Transform* tr = s.obj->GetComponent<Transform>();
+		tr->SetLocalScale(size.x, size.y, size.z);
+		tr->SetLocalPosition(center);
+		s.renderer = s.obj->AddComponent<FadeRenderer>(meshChache["FlatCube"], GetMaterial(material));
+		s.base = s.center = center;
+		s.size = size;
+		return s;
+	};
+	float minX = 1e9f, maxX = -1e9f;
+	for (const auto& b : level.blocks) {
+		solids.push_back(spawnSolid("Block", b.center, b.size, b.material.empty() ? "Paper" : b.material));
+		minX = std::min(minX, b.center.x - b.size.x * 0.5f);
+		maxX = std::max(maxX, b.center.x + b.size.x * 0.5f);
 	}
 	for (const auto& m : level.movers) {
-		Solid s;
-		s.obj = SpawnCube("Mover", m.center, m.size, m.material, true);
-		s.base = s.center = m.center;
-		s.size = m.size;
+		Solid s = spawnSolid("Mover", m.center, m.size, m.material);
 		s.amplitude = m.amplitude;
 		s.period = m.period;
 		solids.push_back(s);
@@ -261,8 +308,13 @@ void GameManager::LoadLevel(const string& file, bool resetHp) {
 		checkpoints.push_back({ flag, c, false });
 	}
 
+	// 페이지 조각: 투명 배경 그림을 붙인 앞뒤 사각형
 	for (const auto& f : level.fragments) {
-		Object* o = SpawnCube("Fragment", f, vec3(0.6f, 0.75f, 0.08f), "Fragment", true);
+		Object* o = Spawn("Fragment", true);
+		Transform* t = o->GetComponent<Transform>();
+		t->SetLocalScale(0.72f, 0.96f, 1.0f);
+		t->SetLocalPosition(f);
+		o->AddComponent<MeshRenderer3D>(meshChache["SpriteQuad"], GetMaterial("PageSprite"));
 		pickups.push_back({ o, f, false });
 	}
 
@@ -280,6 +332,8 @@ void GameManager::LoadLevel(const string& file, bool resetHp) {
 		levelLights.push_back(light);
 	}
 
+	if (minX < maxX) BuildBackdrop(minX, maxX);
+
 	if (resetHp) hp = kMaxHp;
 	fragments = std::max(0, level.page - 1);
 	respawnPoint = level.start + vec3(0.0f, HalfSize().y + kSkin, 0.0f);
@@ -289,7 +343,136 @@ void GameManager::LoadLevel(const string& file, bool resetHp) {
 	state = GameState::Playing;
 	stateTimer = 0.0f;
 	clock = 0.0f;
-	cout << "[게임] " << file << " 시작" << endl;
+	cout << "[게임] " << file << " 시작 (실행 후 " << (startTime >= 0.0 ? glfwGetTime() - startTime : 0.0) << "초)" << endl;
+}
+
+// 팝업북 배경 판: 산(먼 층) · 구름 · 언덕 · 나무(가까운 층).
+// 2D에서는 판들이 거의 붙어 있다가 3D로 바뀌면 깊이 방향으로 벌어진다 (SyncVisuals).
+void GameManager::BuildBackdrop(float minX, float maxX) {
+	auto piece = [&](const string& name, const string& mat, Mesh* mesh, vec3 p, vec3 scale, float z2D, float z3D, float rotZ) {
+		Object* o = Spawn(name, true);
+		Transform* t = o->GetComponent<Transform>();
+		t->SetLocalScale(scale.x, scale.y, scale.z);
+		if (rotZ != 0.0f) t->SetLocalRotation(0.0f, 0.0f, rotZ);
+		t->SetLocalPosition(vec3(p.x, p.y, z2D));
+		o->AddComponent<MeshRenderer3D>(mesh, GetMaterial(mat));
+		backdrops.push_back({ o, vec3(p.x, p.y, z2D), z2D, z3D });
+	};
+	Mesh* cube = meshChache["FlatCube"];
+	Mesh* sphere = meshChache["Sphere"];
+	float x0 = minX - 24.0f, x1 = maxX + 24.0f;
+
+	int i = 0;
+	for (float x = x0; x < x1; x += 8.0f + 4.0f * Hash01(i, 1), ++i) {          // 먼 산 (45도 돌린 판)
+		float s = 6.0f + 3.5f * Hash01(i, 2);
+		piece("Bg_Mountain", "BgMountain", cube, vec3(x, -2.5f, 0), vec3(s, s, 0.3f), -11.6f, -34.0f, 45.0f);
+	}
+	i = 0;
+	for (float x = x0; x < x1; x += 11.0f + 7.0f * Hash01(i, 3), ++i) {         // 구름
+		piece("Bg_Cloud", "BgCloud", sphere, vec3(x, 6.5f + 2.0f * Hash01(i, 4), 0), vec3(2.0f + Hash01(i, 5), 0.7f, 0.15f), -11.3f, -27.0f, 0.0f);
+	}
+	i = 0;
+	for (float x = x0; x < x1; x += 5.0f + 3.0f * Hash01(i, 6), ++i) {          // 언덕
+		piece("Bg_Hill", "BgHill", sphere, vec3(x, -2.0f, 0), vec3(3.2f + 1.6f * Hash01(i, 7), 2.4f + 0.9f * Hash01(i, 8), 0.3f), -11.0f, -21.0f, 0.0f);
+	}
+	i = 0;
+	for (float x = x0; x < x1; x += 6.0f + 6.0f * Hash01(i, 9), ++i) {          // 나무
+		float h = 1.8f + 0.8f * Hash01(i, 10);
+		piece("Bg_Trunk", "BgTrunk", cube, vec3(x, -1.0f + h * 0.5f, 0), vec3(0.35f, h + 2.0f, 0.2f), -10.6f, -14.0f, 0.0f);
+		piece("Bg_Leaf", "BgLeaf", sphere, vec3(x, h + 0.9f, 0), vec3(1.2f, 1.5f, 0.25f), -10.5f, -13.8f, 0.0f);
+	}
+}
+
+// ======================================================================
+//  화면 흐름
+// ======================================================================
+
+void GameManager::StartGame(string file) {
+	playTime = 0.0f;
+	LoadLevel(file, true);
+}
+
+void GameManager::GoToTitle() {
+	ClearLevel();
+	ResetPlayerAt(vec3(0.0f, -100.0f, 0.0f));
+	state = GameState::Title;
+	selectedButton = 0;
+}
+
+std::vector<MenuButton> GameManager::GetMenuButtons() const {
+	vector<pair<string, MenuAction>> items;
+	float startY = 0.0f;
+	float H = static_cast<float>(screenSize.height), W = static_cast<float>(screenSize.width);
+	switch (state) {
+	case GameState::Title:    items = { { "START", MenuAction::Start }, { "QUIT", MenuAction::Quit } }; startY = H * 0.60f; break;
+	case GameState::Paused:   items = { { "RESUME", MenuAction::Resume }, { "TITLE", MenuAction::ToTitle } }; startY = H * 0.48f; break;
+	case GameState::GameOver: items = { { "RETRY", MenuAction::Retry }, { "TITLE", MenuAction::ToTitle } }; startY = H * 0.58f; break;
+	case GameState::Ending:   items = { { "TITLE", MenuAction::ToTitle }, { "QUIT", MenuAction::Quit } }; startY = H * 0.70f; break;
+	default: return {};
+	}
+	float ui = std::max(0.7f, H / 1080.0f);
+	float bw = 300.0f * ui, bh = 64.0f * ui, gap = 20.0f * ui;
+	vector<MenuButton> buttons;
+	for (size_t i = 0; i < items.size(); ++i)
+		buttons.push_back({ items[i].first, (W - bw) * 0.5f, startY + i * (bh + gap), bw, bh, items[i].second });
+	return buttons;
+}
+
+// 메뉴: 마우스로 가리키고 클릭, 또는 W/S·방향키로 고르고 Enter·Space
+void GameManager::HandleMenu() {
+	vector<MenuButton> buttons = GetMenuButtons();
+	if (buttons.empty()) return;
+	InputManager& input = gameObject->ctx.inputManager;
+	int n = static_cast<int>(buttons.size());
+	selectedButton = std::clamp(selectedButton, 0, n - 1);
+
+	float mx = (input.GetMouseX() + 1.0f) * 0.5f * screenSize.width;
+	float my = (1.0f - input.GetMouseY()) * 0.5f * screenSize.height;
+	int hovered = -1;
+	for (int i = 0; i < n; ++i) {
+		const MenuButton& b = buttons[i];
+		if (mx >= b.x && mx <= b.x + b.w && my >= b.y && my <= b.y + b.h) hovered = i;
+	}
+	static float lastMx = -1.0f, lastMy = -1.0f;
+	if ((mx != lastMx || my != lastMy) && hovered >= 0 && hovered != selectedButton) { selectedButton = hovered; Sound::Play("select"); }
+	lastMx = mx; lastMy = my;
+
+	if (input.GetKeyDown(GLFW_KEY_W) || input.GetKeyDown(GLFW_KEY_UP)) { selectedButton = (selectedButton + n - 1) % n; Sound::Play("select"); }
+	if (input.GetKeyDown(GLFW_KEY_S) || input.GetKeyDown(GLFW_KEY_DOWN)) { selectedButton = (selectedButton + 1) % n; Sound::Play("select"); }
+
+	bool click = input.GetKeyDown(GLFW_MOUSE_BUTTON_LEFT) && hovered >= 0;
+	if (click) selectedButton = hovered;
+	if (click || input.GetKeyDown(GLFW_KEY_ENTER) || input.GetKeyDown(GLFW_KEY_SPACE)) ActivateMenu(buttons[selectedButton].action);
+}
+
+void GameManager::ActivateMenu(MenuAction action) {
+	Sound::Play("select");
+	switch (action) {
+	case MenuAction::Start:   StartGame(kStageFiles[0]); break;
+	case MenuAction::Resume:  state = pausedFrom; break;
+	case MenuAction::Retry:   LoadLevel(currentFile, true); break;
+	case MenuAction::ToTitle: GoToTitle(); break;
+	case MenuAction::Quit: {
+		GLFWwindow* window = glfwGetCurrentContext();
+		if (window) glfwSetWindowShouldClose(window, GLFW_TRUE);
+		break;
+	}
+	}
+}
+
+// R: 지금 스테이지 다시, F1~F4: 튜토리얼·스테이지 1~3 (개발·테스트용)
+bool GameManager::HandleDebugKeys() {
+	InputManager& input = gameObject->ctx.inputManager;
+	if (input.GetKeyDown(GLFW_KEY_R) && !currentFile.empty() && state != GameState::Title) { LoadLevel(currentFile, true); return true; }
+	const int keys[] = { GLFW_KEY_F1, GLFW_KEY_F2, GLFW_KEY_F3, GLFW_KEY_F4 };
+	for (int i = 0; i < 4; ++i) {
+		if (input.GetKeyDown(keys[i])) {
+			if (state == GameState::Title) StartGame(kStageFiles[i]);
+			else LoadLevel(kStageFiles[i], true);
+			return true;
+		}
+	}
+	return false;
 }
 
 // ======================================================================
@@ -297,47 +480,64 @@ void GameManager::LoadLevel(const string& file, bool resetHp) {
 // ======================================================================
 
 void GameManager::Update(float dt) {
+	realClock += dt;
 	double now = glfwGetTime();
 	if (startTime < 0.0) startTime = now;
 	double elapsed = now - startTime;
-	if (replay.active && replay.Apply(elapsed, gameObject->ctx.inputManager)) {
+	InputManager& input = gameObject->ctx.inputManager;
+	if (replay.active && replay.Apply(elapsed, input)) {
 		GLFWwindow* window = glfwGetCurrentContext();
 		if (window) glfwSetWindowShouldClose(window, GLFW_TRUE);
 	}
 	// F12 또는 POPUP_CAPTURE 시각 → 이번 프레임을 다 그린 뒤 스크린샷 저장
-	if (gameObject->ctx.inputManager.GetKeyDown(GLFW_KEY_F12)) captureRequested = true;
+	if (input.GetKeyDown(GLFW_KEY_F12)) captureRequested = true;
 	while (nextCapture < captureTimes.size() && captureTimes[nextCapture] <= elapsed) {
 		captureRequested = true;
 		++nextCapture;
 	}
+	if (input.GetKeyDown(GLFW_KEY_M)) Sound::SetMuted(!Sound::IsMuted());
 
 	blockedTimer = std::max(0.0f, blockedTimer - dt);
 	shakeTimer = std::max(0.0f, shakeTimer - dt);
 
-	if (!HandleDebugKeys()) {
-		InputManager& input = gameObject->ctx.inputManager;
-		switch (state) {
-		case GameState::Playing:
-			clock += dt;
-			invuln = std::max(0.0f, invuln - dt);
-			UpdateMovers();
-			UpdatePlayer(dt);
-			UpdateWorms(dt);
-			CheckHazardsAndPickups();
-			if (state == GameState::Playing) UpdateGauge(dt);
-			if (state == GameState::Playing && input.GetKeyDown(GLFW_KEY_E)) TrySwitchView();
-			break;
-		case GameState::Transition:
-			UpdateTransition(dt); // 전환하는 동안은 게임을 멈춘다
-			break;
-		case GameState::StageClear:
-			stateTimer -= dt;
-			if (stateTimer <= 0.0f && !level.next.empty()) LoadLevel("Levels/" + level.next, true); // 다음 스테이지에서 HP 회복
-			break;
-		case GameState::GameOver:
-			stateTimer -= dt;
-			if (stateTimer <= 0.0f) LoadLevel(currentFile, true); // 스테이지 처음부터
-			break;
+	bool menuState = state == GameState::Title || state == GameState::Paused || state == GameState::GameOver || state == GameState::Ending;
+	if (menuState) {
+		if (state == GameState::Paused && input.GetKeyDown(GLFW_KEY_ESCAPE)) state = pausedFrom;
+		else if (!HandleDebugKeys()) HandleMenu();
+	}
+	else if (!HandleDebugKeys()) {
+		if ((state == GameState::Playing || state == GameState::Transition) && input.GetKeyDown(GLFW_KEY_ESCAPE)) {
+			pausedFrom = state;
+			state = GameState::Paused;
+			selectedButton = 0;
+		}
+		else {
+			switch (state) {
+			case GameState::Playing:
+				clock += dt;
+				playTime += dt;
+				invuln = std::max(0.0f, invuln - dt);
+				UpdateMovers();
+				UpdatePlayer(dt);
+				UpdateWorms(dt);
+				CheckHazardsAndPickups();
+				if (state == GameState::Playing) UpdateGauge(dt);
+				if (state == GameState::Playing && input.GetKeyDown(GLFW_KEY_E)) TrySwitchView();
+				break;
+			case GameState::Transition:
+				playTime += dt;
+				UpdateTransition(dt); // 전환하는 동안은 게임을 멈춘다
+				break;
+			case GameState::StageClear:
+				stateTimer -= dt;
+				if (stateTimer <= 0.0f) {
+					if (!level.next.empty()) LoadLevel("Levels/" + level.next, true); // 다음 스테이지에서 HP 회복
+					else { state = GameState::Ending; selectedButton = 0; }
+				}
+				break;
+			default:
+				break;
+			}
 		}
 	}
 
@@ -347,13 +547,21 @@ void GameManager::Update(float dt) {
 
 	if (debugLog && elapsed >= nextLogTime) {
 		nextLogTime = elapsed + 0.25;
-		const char* stateName[] = { "Playing", "Transition", "StageClear", "GameOver" };
+		const char* stateName[] = { "Title", "Playing", "Transition", "Paused", "StageClear", "GameOver", "Ending" };
 		cout << fixed;
 		cout.precision(2);
 		cout << "[로그] t=" << elapsed << " pos=(" << pos.x << ", " << pos.y << ", " << pos.z << ")"
 			<< (mode == ViewMode::View3D ? " 3D" : " 2D") << " viewT=" << viewT << " gauge=" << gauge
-			<< " hp=" << hp << " ground=" << groundSolid << " " << stateName[static_cast<int>(state)] << endl;
+			<< " hp=" << hp << " ground=" << groundSolid << " " << stateName[static_cast<int>(state)];
+		// 가장 가까운 책벌레 위치 (입력 스크립트 타이밍 맞추기용)
+		const Worm* nearest = nullptr;
+		for (const auto& w : worms) {
+			if (w.alive && (!nearest || std::abs(w.pos.x - pos.x) < std::abs(nearest->pos.x - pos.x))) nearest = &w;
+		}
+		if (nearest && std::abs(nearest->pos.x - pos.x) < 12.0f) cout << " worm=" << nearest->pos.x << (nearest->dir > 0 ? ">" : "<");
+		cout << " clock=" << clock << endl;
 		cout << defaultfloat;
+		cout.precision(6);
 	}
 }
 
@@ -367,15 +575,6 @@ void GameManager::OnFrameRendered() {
 	name << dir << "/shot_" << captureCount << ".bmp";
 	if (SaveScreenshotBMP(name.str(), screenSize.width, screenSize.height)) cout << "[캡처] " << name.str() << endl;
 	else cout << "[캡처] 저장 실패: " << name.str() << endl;
-}
-
-// R: 지금 스테이지 다시, F1: 튜토리얼, F2: 스테이지 1 (개발·테스트용)
-bool GameManager::HandleDebugKeys() {
-	InputManager& input = gameObject->ctx.inputManager;
-	if (input.GetKeyDown(GLFW_KEY_R)) { LoadLevel(currentFile, true); return true; }
-	if (input.GetKeyDown(GLFW_KEY_F1)) { LoadLevel(kTutorialFile, true); return true; }
-	if (input.GetKeyDown(GLFW_KEY_F2)) { LoadLevel(kStage1File, true); return true; }
-	return false;
 }
 
 void GameManager::ResetPlayerAt(vec3 p) {
@@ -404,9 +603,10 @@ void GameManager::RespawnAtCheckpoint(bool loseHp) {
 
 void GameManager::LoseHp() {
 	hp = std::max(0, hp - 1);
+	Sound::Play("hurt");
 	if (hp == 0) {
 		state = GameState::GameOver;
-		stateTimer = 2.0f;
+		selectedButton = 0;
 		cout << "[게임] HP 0 → 게임 오버" << endl;
 	}
 }
@@ -432,6 +632,22 @@ void GameManager::UpdatePlayer(float dt) {
 		pos += d;
 	}
 
+	// 올라오는 발판이 착지하는 플레이어를 아래에서 파고들면 위로 올려 태운다
+	// (그대로 두면 "이미 겹친 물체는 무시" 규칙 때문에 발판을 뚫고 떨어진다)
+	for (size_t i = 0; i < solids.size(); ++i) {
+		const Solid& s = solids[i];
+		if (s.period <= 0.0f) continue;
+		Box b = s.GetBox();
+		if (!BoxesOverlap(PlayerBox(), b, mode)) continue;
+		float feet = pos.y - HalfSize().y;
+		if (feet >= b.max.y - 0.35f && vel.y <= 0.0f) {
+			pos.y = b.max.y + HalfSize().y + kSkin;
+			vel.y = 0.0f;
+			grounded = true;
+			groundSolid = static_cast<int>(i);
+		}
+	}
+
 	float ix = 0.0f, iz = 0.0f;
 	if (input.GetKeyPressed(GLFW_KEY_D)) ix += 1.0f;
 	if (input.GetKeyPressed(GLFW_KEY_A)) ix -= 1.0f;
@@ -452,6 +668,7 @@ void GameManager::UpdatePlayer(float dt) {
 		vel.y = kJumpSpeed;
 		jumpBuffer = 0.0f;
 		coyote = 0.0f;
+		Sound::Play("jump");
 	}
 	if (vel.y > 0.0f && !input.GetKeyPressed(GLFW_KEY_SPACE)) vel.y -= kGravity * dt; // 짧게 누르면 낮게 뜀
 	vel.y = std::max(vel.y - kGravity * dt, -kMaxFallSpeed);
@@ -533,6 +750,7 @@ void GameManager::CheckHazardsAndPickups() {
 			w.root->isValid = false;
 			for (Object* o : w.parts) o->isValid = false;
 			vel.y = 8.0f;
+			Sound::Play("stomp");
 			cout << "[게임] 책벌레를 밟아 물리침" << endl;
 		}
 		else if (invuln <= 0.0f) {
@@ -552,6 +770,7 @@ void GameManager::CheckHazardsAndPickups() {
 			c.active = true;
 			c.flag->GetComponent<MeshRenderer3D>()->materials[0] = GetMaterial("CheckOn");
 			respawnPoint = c.foot + vec3(0.0f, HalfSize().y + kSkin, 0.0f);
+			Sound::Play("checkpoint");
 			cout << "[게임] 체크포인트 저장 x=" << c.foot.x << endl;
 		}
 	}
@@ -564,6 +783,7 @@ void GameManager::CheckHazardsAndPickups() {
 			fragments = std::max(fragments, level.page);
 			state = GameState::StageClear;
 			stateTimer = 2.0f;
+			Sound::Play("clear");
 			cout << "[게임] 페이지 조각 " << fragments << "/" << kTotalFragments << " 획득 → 스테이지 클리어" << endl;
 		}
 	}
@@ -580,6 +800,7 @@ void GameManager::UpdateGauge(float dt) {
 			}
 			else {
 				cout << "[게임] 게이지 0, 2D로 돌아갈 수 없는 자리 → 체크포인트로 (HP 유지)" << endl;
+				Sound::Play("blocked");
 				RespawnAtCheckpoint(false);
 			}
 		}
@@ -606,6 +827,7 @@ void GameManager::TrySwitchView() {
 void GameManager::SwitchBlocked() {
 	blockedTimer = 0.6f;  // HUD 아이콘 빨간색
 	shakeTimer = 0.3f;    // 화면 흔들림
+	Sound::Play("blocked");
 	cout << "[게임] 시점 전환 막힘 x=" << pos.x << endl;
 }
 
@@ -613,6 +835,7 @@ void GameManager::BeginTransition(ViewMode to) {
 	targetMode = to;
 	transitionTimer = 0.0f;
 	state = GameState::Transition;
+	Sound::Play("switch");
 }
 
 void GameManager::UpdateTransition(float dt) {
@@ -671,12 +894,13 @@ void GameManager::SyncVisuals(float dt) {
 	Transform* pt = playerRoot->GetComponent<Transform>();
 	pt->SetLocalRotation(0.0f, visualYaw, 0.0f);
 	pt->SetLocalPosition(pos);
-	bool visible = invuln <= 0.0f || std::fmod(clock * 12.0f, 2.0f) < 1.0f; // 무적 중 깜빡임
-	for (MeshRenderer3D* r : playerRenderers) r->isValid = visible;
+	bool blinkOn = invuln <= 0.0f || std::fmod(clock * 12.0f, 2.0f) < 1.0f; // 무적 중 깜빡임
+	bool showPlayer = blinkOn && state != GameState::Title && !currentFile.empty();
+	for (MeshRenderer3D* r : playerRenderers) r->isValid = showPlayer;
 
 	// 3D에서만 발밑 그림자
 	float groundTop = 0.0f;
-	if (viewT >= 0.5f && FindGroundTop(groundTop)) {
+	if (showPlayer && viewT >= 0.5f && FindGroundTop(groundTop)) {
 		shadow->isValid = true;
 		shadow->GetComponent<Transform>()->SetLocalPosition(pos.x, groundTop + 0.02f, pos.z);
 	}
@@ -694,20 +918,50 @@ void GameManager::SyncVisuals(float dt) {
 	for (auto& p : pickups) {
 		if (p.taken) continue;
 		Transform* t = p.obj->GetComponent<Transform>();
-		t->SetLocalRotation(0.0f, clock * 90.0f, 8.0f);
+		t->SetLocalRotation(0.0f, clock * 90.0f, 6.0f);
 		t->SetLocalPosition(p.pos + vec3(0.0f, 0.15f * std::sin(clock * 2.5f), 0.0f));
+	}
+
+	// 팝업북 배경: 3D로 갈수록 판 사이가 벌어진다
+	float s = smoothstep(0.0f, 1.0f, viewT);
+	for (auto& b : backdrops) {
+		b.obj->GetComponent<Transform>()->SetLocalPosition(b.pos.x, b.pos.y, mix(b.z2D, b.z3D, s));
+	}
+
+	UpdateWallFade(dt);
+}
+
+// 3D에서 카메라와 플레이어 사이를 가리는 발판·벽은 반투명하게
+void GameManager::UpdateWallFade(float dt) {
+	Transform* camTr = cameraObj->GetComponent<Transform>();
+	vec3 eye = camTr->worldPosition;
+	bool check = viewT >= 0.5f && state != GameState::Title;
+	float rate = std::min(1.0f, 8.0f * dt);
+	for (auto& s : solids) {
+		if (!s.renderer) continue;
+		float target = 1.0f;
+		if (check) {
+			Box b = s.GetBox();
+			if (SegmentHitsBox(eye, pos, b) || SegmentHitsBox(eye, pos + vec3(0.0f, 0.5f, 0.0f), b)) target = 0.3f;
+		}
+		s.renderer->alpha += (target - s.renderer->alpha) * rate;
 	}
 }
 
 void GameManager::UpdateWindowTitle() {
 	ostringstream ss;
-	ss << U8(u8"팝업북 · ") << level.name
-		<< " | HP " << hp << "/" << kMaxHp
-		<< " | " << (mode == ViewMode::View3D ? "3D" : "2D")
-		<< U8(u8" 게이지 ") << static_cast<int>(std::round(gauge * 100.0f)) << "%"
-		<< U8(u8" | 조각 ") << fragments << "/" << kTotalFragments;
-	string msg = CurrentMessage();
-	if (!msg.empty()) ss << " | " << msg;
+	if (state == GameState::Title || currentFile.empty()) {
+		ss << U8(u8"팝업북 · 타이틀 | Enter/클릭: 시작 | M: 소리 ") << (Sound::IsMuted() ? U8(u8"켜기") : U8(u8"끄기"));
+	}
+	else {
+		ss << U8(u8"팝업북 · ") << level.name
+			<< " | HP " << hp << "/" << kMaxHp
+			<< " | " << (mode == ViewMode::View3D ? "3D" : "2D")
+			<< U8(u8" 게이지 ") << static_cast<int>(std::round(gauge * 100.0f)) << "%"
+			<< U8(u8" | 조각 ") << fragments << "/" << kTotalFragments;
+		string msg = CurrentMessage();
+		if (!msg.empty()) ss << " | " << msg;
+	}
 
 	string title = ss.str();
 	if (title != lastTitle) {
@@ -718,11 +972,13 @@ void GameManager::UpdateWindowTitle() {
 }
 
 std::string GameManager::CurrentMessage() const {
-	if (state == GameState::GameOver) return U8(u8"게임 오버! 스테이지를 처음부터 다시 시작해요");
-	if (state == GameState::StageClear) {
-		return level.next.empty()
-			? U8(u8"스테이지 클리어! 다음 스테이지는 아직 없어요 (R: 다시, F1: 튜토리얼)")
-			: U8(u8"스테이지 클리어! 다음 페이지로 넘어가요");
+	switch (state) {
+	case GameState::Paused:   return U8(u8"일시정지 (ESC: 계속)");
+	case GameState::GameOver: return U8(u8"게임 오버! 다시 시작하거나 타이틀로");
+	case GameState::Ending:   return U8(u8"마지막 장 완성! 플레이해 주셔서 고마워요");
+	case GameState::StageClear:
+		return level.next.empty() ? U8(u8"마지막 조각을 찾았어요!") : U8(u8"스테이지 클리어! 다음 페이지로 넘어가요");
+	default: break;
 	}
 	if (blockedTimer > 0.0f) return U8(u8"여기서는 시점을 바꿀 수 없어요");
 	for (const auto& h : level.hints) {

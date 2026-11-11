@@ -303,9 +303,10 @@ void InputProcess(GLFWwindow* window)
 {
 	AppContext* ctx = static_cast<AppContext*>(glfwGetWindowUserPointer(window));
 
-	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+	//[Game] ESC는 GameManager의 일시정지 메뉴로 쓴다. 종료는 타이틀·엔딩의 QUIT 버튼이나 창 닫기로.
+	/*if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, GL_TRUE);
-	}
+	}*/
 	/*else if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
 		glfwSetWindowShouldClose(window, GL_TRUE);
 	}*/

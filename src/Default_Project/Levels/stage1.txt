@@ -12,6 +12,7 @@
 
 name 스테이지 1
 page 2
+next stage2.txt
 killY -7
 start 0 0 0
 

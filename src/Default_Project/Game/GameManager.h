@@ -11,12 +11,21 @@ class Camera;
 class Light;
 class Material;
 class MeshRenderer3D;
+class FadeRenderer;
 
-enum class GameState { Playing, Transition, StageClear, GameOver };
+enum class GameState { Title, Playing, Transition, Paused, StageClear, GameOver, Ending };
+
+enum class MenuAction { Start, Quit, Resume, ToTitle, Retry };
+struct MenuButton {
+	std::string label;
+	float x, y, w, h;   // 픽셀, 왼쪽 위 원점
+	MenuAction action;
+};
 
 // 게임 한 판을 진행하는 컴포넌트.
-// 레벨 불러오기, 플레이어 이동, 적·함정, 3D 게이지, 시점 전환, 추적 카메라를 한곳에서 처리한다.
-// 충돌·전환 "규칙"은 CoreRules.h의 함수(직접 작성할 부분)로만 판단한다.
+// 화면 흐름(타이틀·일시정지·게임 오버·엔딩), 레벨 불러오기, 플레이어, 적·함정, 3D 게이지,
+// 시점 전환, 추적 카메라, 반투명 벽, 배경 층을 한곳에서 처리한다.
+// 충돌·전환 "규칙"은 CoreRules.h의 함수로만 판단한다.
 class GameManager : public Component {
 public:
 	std::string firstLevel = "Levels/tutorial.txt";
@@ -37,8 +46,14 @@ public:
 	bool IsSwitchBlocked() const { return blockedTimer > 0.0f; }
 	int GetFragments() const { return fragments; }
 	int GetTotalFragments() const;
+	int GetPage() const { return level.page; }
 	GameState GetState() const { return state; }
 	float GetTime() const { return clock; }
+	float GetRealTime() const { return realClock; }
+	float GetPlayTime() const { return playTime; }
+	bool IsMuted() const;
+	std::vector<MenuButton> GetMenuButtons() const;
+	int GetSelectedButton() const { return selectedButton; }
 
 	// 한 프레임을 다 그린 직후(HUD가 마지막에) 부른다. 스크린샷 저장용.
 	void OnFrameRendered();
@@ -48,6 +63,7 @@ private:
 
 	struct Solid {
 		Object* obj = nullptr;
+		FadeRenderer* renderer = nullptr;
 		vec3 base{ 0.0f }, center{ 0.0f }, size{ 1.0f };
 		vec3 amplitude{ 0.0f };   // 움직이는 발판: 왕복 폭
 		float period = 0.0f;      // 움직이는 발판: 주기(초). 0이면 고정
@@ -66,6 +82,7 @@ private:
 	};
 	struct Checkpoint { Object* flag = nullptr; vec3 foot{ 0.0f }; bool active = false; };
 	struct Pickup { Object* obj = nullptr; vec3 pos{ 0.0f }; bool taken = false; };
+	struct Backdrop { Object* obj = nullptr; vec3 pos{ 0.0f }; float z2D = 0.0f, z3D = 0.0f; };
 
 	// 카메라
 	Object* cameraObj = nullptr;
@@ -76,6 +93,7 @@ private:
 	Object* playerRoot = nullptr;
 	std::vector<MeshRenderer3D*> playerRenderers;
 	Object* shadow = nullptr;
+	FadeRenderer* shadowRenderer = nullptr;
 	vec3 pos{ 0.0f };            // 충돌 상자 중심
 	vec3 vel{ 0.0f };
 	bool grounded = false;
@@ -98,9 +116,13 @@ private:
 	float transitionTimer = 0.0f;
 	float blockedTimer = 0.0f;   // 전환이 막혔을 때 아이콘을 빨갛게
 	float shakeTimer = 0.0f;
-	GameState state = GameState::Playing;
+	GameState state = GameState::Title;
+	GameState pausedFrom = GameState::Playing;
 	float stateTimer = 0.0f;
-	float clock = 0.0f;          // 플레이 중에만 흐르는 시간
+	float clock = 0.0f;          // 플레이 중에만 흐르는 시간 (움직이는 발판·적 기준)
+	float realClock = 0.0f;      // 항상 흐르는 시간 (메뉴 깜빡임 등)
+	float playTime = 0.0f;       // 엔딩에 보여 줄 클리어 시간
+	int selectedButton = 0;
 
 	// 레벨
 	LevelData level;
@@ -111,16 +133,17 @@ private:
 	std::vector<Worm> worms;
 	std::vector<Checkpoint> checkpoints;
 	std::vector<Pickup> pickups;
+	std::vector<Backdrop> backdrops;
 	std::vector<Object*> levelObjects;   // 레벨을 바꿀 때 지울 오브젝트 (만든 순서)
 	std::vector<Light*> levelLights;
 	std::string lastTitle;
 
-	// 테스트 도구 (환경 변수 POPUP_LEVEL, POPUP_REPLAY, POPUP_LOG)
+	// 테스트 도구 (환경 변수 POPUP_LEVEL, POPUP_REPLAY, POPUP_LOG, POPUP_CAPTURE)
 	InputReplay replay;
 	bool debugLog = false;
 	double startTime = -1.0;
 	double nextLogTime = 0.0;
-	std::vector<double> captureTimes;    // POPUP_CAPTURE="2.0,5.5" → 그 시각에 자동 캡처
+	std::vector<double> captureTimes;
 	size_t nextCapture = 0;
 	bool captureRequested = false;       // F12 또는 자동 캡처
 	int captureCount = 0;
@@ -130,11 +153,18 @@ private:
 	Object* SpawnCube(const std::string& name, vec3 center, vec3 size, const std::string& material, bool isLevelObject);
 	Material* GetMaterial(const std::string& name);
 	void CreatePersistentObjects();
-	void LoadLevel(const std::string& file, bool resetHp);
+	void LoadLevel(std::string file, bool resetHp);
 	void ClearLevel();
+	void BuildBackdrop(float minX, float maxX);
+
+	// 화면 흐름
+	void StartGame(std::string file);
+	void GoToTitle();
+	void HandleMenu();
+	void ActivateMenu(MenuAction action);
+	bool HandleDebugKeys();
 
 	// 진행
-	bool HandleDebugKeys();
 	void ResetPlayerAt(vec3 p);
 	void RespawnAtCheckpoint(bool loseHp);
 	void LoseHp();
@@ -152,6 +182,7 @@ private:
 	// 화면
 	void UpdateCamera(float dt);
 	void SyncVisuals(float dt);
+	void UpdateWallFade(float dt);
 	void UpdateWindowTitle();
 	std::string CurrentMessage() const;
 
