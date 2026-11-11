@@ -354,4 +354,35 @@
       <Filter>Shader</Filter>
     </None>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Game\CharacterArt.h">
+      <Filter>Game\Header</Filter>
+    </ClInclude>
+    <ClCompile Include="Game\CharacterArt.cpp">
+      <Filter>Game\Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Game\SdfPaint.h">
+      <Filter>Game\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\StoryArt.h">
+      <Filter>Game\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Game\StoryDecor.h">
+      <Filter>Game\Header</Filter>
+    </ClInclude>
+    <ClCompile Include="Game\StoryArt.cpp">
+      <Filter>Game\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Game\StoryDecor.cpp">
+      <Filter>Game\Source</Filter>
+    </ClCompile>
+    <None Include="Shader\Sky_vertex.glsl">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="Shader\Sky_fragment.glsl">
+      <Filter>Shader</Filter>
+    </None>
+  </ItemGroup>
 </Project>

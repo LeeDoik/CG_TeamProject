@@ -20,7 +20,7 @@ public:
 
 private:
 	GLuint program = 0, vao = 0, vbo = 0;
-	GLint rectLoc = -1, colorLoc = -1, screenLoc = -1;
+	GLint rectLoc = -1, colorLoc = -1, screenLoc = -1, modeLoc = -1;
 	float W = 0.0f, H = 0.0f, ui = 1.0f;
 
 	void Rect(float x, float y, float w, float h, const vec4& color);
@@ -37,4 +37,6 @@ private:
 	void DrawPause();
 	void DrawGameOver();
 	void DrawEnding();
+	void DrawChapterBanner();
+	void DrawPageTurn();
 };

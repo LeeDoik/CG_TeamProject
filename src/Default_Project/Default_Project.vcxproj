@@ -55,6 +55,10 @@
     <ClInclude Include="Game\FadeRenderer.h" />
     <ClInclude Include="Game\ProceduralTextures.h" />
     <ClInclude Include="Game\Sound.h" />
+    <ClInclude Include="Game\CharacterArt.h" />
+    <ClInclude Include="Game\SdfPaint.h" />
+    <ClInclude Include="Game\StoryArt.h" />
+    <ClInclude Include="Game\StoryDecor.h" />
     <ClInclude Include="Script\SceneCamera.h" />
     <ClInclude Include="Script\TestScript.h" />
     <ClInclude Include="Utility\ColliderManager.h" />
@@ -88,6 +92,9 @@
     <ClCompile Include="Game\FadeRenderer.cpp" />
     <ClCompile Include="Game\ProceduralTextures.cpp" />
     <ClCompile Include="Game\Sound.cpp" />
+    <ClCompile Include="Game\CharacterArt.cpp" />
+    <ClCompile Include="Game\StoryArt.cpp" />
+    <ClCompile Include="Game\StoryDecor.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Script\SceneCamera.cpp" />
     <ClCompile Include="Script\TestScript.cpp" />
@@ -104,6 +111,8 @@
     <None Include="Levels\stage3.txt" />
     <None Include="Shader\Hud_vertex.glsl" />
     <None Include="Shader\Hud_fragment.glsl" />
+    <None Include="Shader\Sky_vertex.glsl" />
+    <None Include="Shader\Sky_fragment.glsl" />
     <None Include="Shader\Paper_fragment.glsl" />
     <None Include="Shader\Paper_vertex.glsl" />
     <None Include="Shader\Sprite_vertex.glsl" />

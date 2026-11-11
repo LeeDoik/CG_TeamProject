@@ -7,8 +7,13 @@ namespace ProceduralTextures {
 		kPaper = 1,   // 종이 결
 		kCard = 2,    // 골판지 줄무늬
 		kWall = 3,    // 벽지 무늬
-		kDoll = 4,    // 종이 인형 (투명 배경)
+		kDoll = 4,    // (예전 종이 인형, 지금은 안 씀)
 		kPage = 5,    // 찢어진 페이지 조각 (투명 배경)
+		kCharacterBase = 6,   // 캐릭터 시안 5종: 6 ~ 10 (CharacterArt)
+		kPropAtlas = 11,      // 팝업 소품·하늘 그림 (StoryArt)
+		kBackdropAtlas = 12,  // 배경 판 (StoryArt)
+		kFringe = 13,         // 잔디 물결 끝 (가로 반복)
+		kPageLines = 14,      // 책장 글줄 (반복)
 	};
 
 	void CreateAll();

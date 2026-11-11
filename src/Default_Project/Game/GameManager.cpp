@@ -4,6 +4,9 @@
 #include "FadeRenderer.h"
 #include "HudRenderer.h"
 #include "Sound.h"
+#include "CharacterArt.h"
+#include "StoryDecor.h"
+#include "ProceduralTextures.h"
 #include "Object.h"
 #include "Transform.h"
 #include "Camera.h"
@@ -94,6 +97,10 @@ namespace {
 }
 
 int GameManager::GetMaxHp() const { return kMaxHp; }
+float GameManager::GetPageCover() const {
+	if (state != GameState::StageClear) return 0.0f;
+	return std::clamp((1.1f - stateTimer) / 1.1f, 0.0f, 1.0f);   // 클리어 2초 중 마지막 1.1초 동안 덮는다
+}
 int GameManager::GetTotalFragments() const { return kTotalFragments; }
 bool GameManager::IsMuted() const { return Sound::IsMuted(); }
 
@@ -123,6 +130,9 @@ void GameManager::Start() {
 	Sound::Init(headless || !GetEnvVar("POPUP_MUTE").empty());
 
 	CreatePersistentObjects();
+	string style = GetEnvVar("POPUP_CHARACTER");
+	SetCharacterStyle(style.empty() ? 0 : atoi(style.c_str()) - 1);
+	characterMsgTimer = 0.0f;
 
 	// 테스트(레벨 지정·입력 재생)는 타이틀을 건너뛰고 바로 시작한다
 	if (!levelOverride.empty() || replay.active) StartGame(firstLevel);
@@ -171,7 +181,7 @@ void GameManager::CreatePersistentObjects() {
 
 	// 방향광: 앞면·윗면은 밝고 옆면은 조금 어둡게 (Standard 셰이더는 direction 쪽에서 빛이 온다고 본다)
 	Object* sun = Spawn("Sun", false);
-	Light* sunLight = sun->AddComponent<Light>();
+	sunLight = sun->AddComponent<Light>();
 	sunLight->lightType = LightType::Directional;
 	sunLight->lightColor = vec4(1.0f, 0.97f, 0.9f, 1.0f);
 	sunLight->intensity = 0.8f;
@@ -180,7 +190,7 @@ void GameManager::CreatePersistentObjects() {
 
 	// 보조광: 반대쪽 옆면이 새까맣게 보이지 않도록 약하게
 	Object* fill = Spawn("FillLight", false);
-	Light* fillLight = fill->AddComponent<Light>();
+	fillLight = fill->AddComponent<Light>();
 	fillLight->lightType = LightType::Directional;
 	fillLight->lightColor = vec4(0.9f, 0.95f, 1.0f, 1.0f);
 	fillLight->intensity = 0.25f;
@@ -206,6 +216,10 @@ void GameManager::CreatePersistentObjects() {
 	Object* hud = Spawn("HUD", false);
 	hud->GetComponent<Transform>()->SetLocalPosition(0.0f, 0.0f, 100000.0f);
 	hud->AddComponent<HudRenderer>()->game = this;
+
+	// 팝업북 꾸미기 (하늘·해달별·구름·꽃잎)
+	decor.Init([this](const string& name, bool isLevelObject) { return Spawn(name, isLevelObject); });
+	decor.ApplyTheme("day");
 }
 
 void GameManager::ClearLevel() {
@@ -222,7 +236,7 @@ void GameManager::ClearLevel() {
 	worms.clear();
 	checkpoints.clear();
 	pickups.clear();
-	backdrops.clear();
+	decor.ClearLevel();
 	level = LevelData{};
 	currentFile.clear();
 }
@@ -324,15 +338,22 @@ void GameManager::LoadLevel(string file, bool resetHp) {
 		Transform* t = o->GetComponent<Transform>();
 		t->SetLocalScale(0.22f, 0.22f, 0.22f);
 		t->SetLocalPosition(l.position);
-		o->AddComponent<MeshRenderer3D>(meshChache["Sphere"], GetMaterial("Lamp"));
-		Light* light = o->AddComponent<Light>();
+		Light* light = o->AddComponent<Light>();   // 모양은 StoryDecor의 빛무리 그림으로 그린다
 		light->lightType = LightType::Point;
 		light->lightColor = vec4(1.0f, 0.82f, 0.5f, 1.0f);
 		light->intensity = l.intensity;
 		levelLights.push_back(light);
 	}
 
-	if (minX < maxX) BuildBackdrop(minX, maxX);
+	// 분위기(하늘·조명)와 꾸미기. 소품을 만들기 전에 테마를 정해야 색이 맞는다.
+	const StoryTheme& theme = decor.ApplyTheme(level.theme);
+	sunLight->lightColor = vec4(theme.sunColor, 1.0f);
+	sunLight->intensity = theme.sunIntensity;
+	fillLight->intensity = theme.fillIntensity;
+	camera->backgroundColor = vec4(theme.skyBottom, 1.0f);
+	vector<vector<FadeRenderer*>> caps;
+	decor.BuildLevel(level, caps);
+	for (size_t i = 0; i < caps.size() && i < solids.size(); ++i) solids[i].caps = caps[i];
 
 	if (resetHp) hp = kMaxHp;
 	fragments = std::max(0, level.page - 1);
@@ -344,43 +365,6 @@ void GameManager::LoadLevel(string file, bool resetHp) {
 	stateTimer = 0.0f;
 	clock = 0.0f;
 	cout << "[게임] " << file << " 시작 (실행 후 " << (startTime >= 0.0 ? glfwGetTime() - startTime : 0.0) << "초)" << endl;
-}
-
-// 팝업북 배경 판: 산(먼 층) · 구름 · 언덕 · 나무(가까운 층).
-// 2D에서는 판들이 거의 붙어 있다가 3D로 바뀌면 깊이 방향으로 벌어진다 (SyncVisuals).
-void GameManager::BuildBackdrop(float minX, float maxX) {
-	auto piece = [&](const string& name, const string& mat, Mesh* mesh, vec3 p, vec3 scale, float z2D, float z3D, float rotZ) {
-		Object* o = Spawn(name, true);
-		Transform* t = o->GetComponent<Transform>();
-		t->SetLocalScale(scale.x, scale.y, scale.z);
-		if (rotZ != 0.0f) t->SetLocalRotation(0.0f, 0.0f, rotZ);
-		t->SetLocalPosition(vec3(p.x, p.y, z2D));
-		o->AddComponent<MeshRenderer3D>(mesh, GetMaterial(mat));
-		backdrops.push_back({ o, vec3(p.x, p.y, z2D), z2D, z3D });
-	};
-	Mesh* cube = meshChache["FlatCube"];
-	Mesh* sphere = meshChache["Sphere"];
-	float x0 = minX - 24.0f, x1 = maxX + 24.0f;
-
-	int i = 0;
-	for (float x = x0; x < x1; x += 8.0f + 4.0f * Hash01(i, 1), ++i) {          // 먼 산 (45도 돌린 판)
-		float s = 6.0f + 3.5f * Hash01(i, 2);
-		piece("Bg_Mountain", "BgMountain", cube, vec3(x, -2.5f, 0), vec3(s, s, 0.3f), -11.6f, -34.0f, 45.0f);
-	}
-	i = 0;
-	for (float x = x0; x < x1; x += 11.0f + 7.0f * Hash01(i, 3), ++i) {         // 구름
-		piece("Bg_Cloud", "BgCloud", sphere, vec3(x, 6.5f + 2.0f * Hash01(i, 4), 0), vec3(2.0f + Hash01(i, 5), 0.7f, 0.15f), -11.3f, -27.0f, 0.0f);
-	}
-	i = 0;
-	for (float x = x0; x < x1; x += 5.0f + 3.0f * Hash01(i, 6), ++i) {          // 언덕
-		piece("Bg_Hill", "BgHill", sphere, vec3(x, -2.0f, 0), vec3(3.2f + 1.6f * Hash01(i, 7), 2.4f + 0.9f * Hash01(i, 8), 0.3f), -11.0f, -21.0f, 0.0f);
-	}
-	i = 0;
-	for (float x = x0; x < x1; x += 6.0f + 6.0f * Hash01(i, 9), ++i) {          // 나무
-		float h = 1.8f + 0.8f * Hash01(i, 10);
-		piece("Bg_Trunk", "BgTrunk", cube, vec3(x, -1.0f + h * 0.5f, 0), vec3(0.35f, h + 2.0f, 0.2f), -10.6f, -14.0f, 0.0f);
-		piece("Bg_Leaf", "BgLeaf", sphere, vec3(x, h + 0.9f, 0), vec3(1.2f, 1.5f, 0.25f), -10.5f, -13.8f, 0.0f);
-	}
 }
 
 // ======================================================================
@@ -460,6 +444,14 @@ void GameManager::ActivateMenu(MenuAction action) {
 	}
 }
 
+// 캐릭터 시안 바꾸기: 종이 인형 재질의 텍스처 유닛만 바꾼다
+void GameManager::SetCharacterStyle(int style) {
+	characterStyle = ((style % CharacterArt::kCount) + CharacterArt::kCount) % CharacterArt::kCount;
+	GetMaterial("DollSprite")->SetInt("spriteTex", ProceduralTextures::kCharacterBase + characterStyle);
+	characterMsgTimer = 3.0f;
+	cout << "[게임] 캐릭터 시안 " << (characterStyle + 1) << "/" << CharacterArt::kCount << endl;
+}
+
 // R: 지금 스테이지 다시, F1~F4: 튜토리얼·스테이지 1~3 (개발·테스트용)
 bool GameManager::HandleDebugKeys() {
 	InputManager& input = gameObject->ctx.inputManager;
@@ -496,8 +488,11 @@ void GameManager::Update(float dt) {
 		++nextCapture;
 	}
 	if (input.GetKeyDown(GLFW_KEY_M)) Sound::SetMuted(!Sound::IsMuted());
+	if (input.GetKeyDown(GLFW_KEY_C)) SetCharacterStyle(characterStyle + 1);
+	characterMsgTimer = std::max(0.0f, characterMsgTimer - dt);
 
 	blockedTimer = std::max(0.0f, blockedTimer - dt);
+	pageReveal = std::max(0.0f, pageReveal - dt);
 	shakeTimer = std::max(0.0f, shakeTimer - dt);
 
 	bool menuState = state == GameState::Title || state == GameState::Paused || state == GameState::GameOver || state == GameState::Ending;
@@ -533,6 +528,7 @@ void GameManager::Update(float dt) {
 				if (stateTimer <= 0.0f) {
 					if (!level.next.empty()) LoadLevel("Levels/" + level.next, true); // 다음 스테이지에서 HP 회복
 					else { state = GameState::Ending; selectedButton = 0; }
+					pageReveal = kPageRevealTime;   // 넘긴 책장이 마저 넘어가며 다음 장이 드러난다
 				}
 				break;
 			default:
@@ -922,11 +918,8 @@ void GameManager::SyncVisuals(float dt) {
 		t->SetLocalPosition(p.pos + vec3(0.0f, 0.15f * std::sin(clock * 2.5f), 0.0f));
 	}
 
-	// 팝업북 배경: 3D로 갈수록 판 사이가 벌어진다
-	float s = smoothstep(0.0f, 1.0f, viewT);
-	for (auto& b : backdrops) {
-		b.obj->GetComponent<Transform>()->SetLocalPosition(b.pos.x, b.pos.y, mix(b.z2D, b.z3D, s));
-	}
+	// 팝업북 꾸미기: 하늘, 해·달·별, 꽃잎, 팝업 소품, 배경 판 벌어짐
+	decor.Update(dt, pos, camFocus, viewT, realClock, state != GameState::Title && !currentFile.empty());
 
 	UpdateWallFade(dt);
 }
@@ -945,6 +938,7 @@ void GameManager::UpdateWallFade(float dt) {
 			if (SegmentHitsBox(eye, pos, b) || SegmentHitsBox(eye, pos + vec3(0.0f, 0.5f, 0.0f), b)) target = 0.3f;
 		}
 		s.renderer->alpha += (target - s.renderer->alpha) * rate;
+		for (FadeRenderer* c : s.caps) c->alpha = s.renderer->alpha;   // 위에 올린 잔디도 같이
 	}
 }
 
@@ -979,6 +973,10 @@ std::string GameManager::CurrentMessage() const {
 	case GameState::StageClear:
 		return level.next.empty() ? U8(u8"마지막 조각을 찾았어요!") : U8(u8"스테이지 클리어! 다음 페이지로 넘어가요");
 	default: break;
+	}
+	if (characterMsgTimer > 0.0f) {
+		return U8(u8"캐릭터 시안 ") + to_string(characterStyle + 1) + "/" + to_string(CharacterArt::kCount) + ": "
+			+ CharacterArt::Name(characterStyle) + U8(u8" (C: 다음 시안)");
 	}
 	if (blockedTimer > 0.0f) return U8(u8"여기서는 시점을 바꿀 수 없어요");
 	for (const auto& h : level.hints) {

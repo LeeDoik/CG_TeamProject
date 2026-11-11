@@ -32,13 +32,13 @@ namespace {
 	}
 
 	// 앞뒤 양면 사각형 (한 변 1, 중심 원점). 색 속성 xy에 텍스처 좌표를 넣는다 (Sprite 셰이더).
-	// 뒷면은 좌우를 뒤집은 좌표라서, y축으로 180도 돌리면 그림이 반대쪽을 보게 된다.
+	// 뒷면도 앞면과 같은 좌표라서, y축으로 180도 돌려 뒷면이 보이면 그림이 좌우로 뒤집혀 반대쪽을 보게 된다.
 	Mesh* MakeSpriteQuad() {
 		vector<Vertex> v = {
 			{ { -0.5f, -0.5f, 0.0f }, { 0, 0, 0 }, { 0, 0, 1 } }, { { 0.5f, -0.5f, 0.0f }, { 1, 0, 0 }, { 0, 0, 1 } },
 			{ { 0.5f, 0.5f, 0.0f }, { 1, 1, 0 }, { 0, 0, 1 } },   { { -0.5f, 0.5f, 0.0f }, { 0, 1, 0 }, { 0, 0, 1 } },
-			{ { -0.5f, -0.5f, 0.0f }, { 1, 0, 0 }, { 0, 0, -1 } }, { { 0.5f, -0.5f, 0.0f }, { 0, 0, 0 }, { 0, 0, -1 } },
-			{ { 0.5f, 0.5f, 0.0f }, { 0, 1, 0 }, { 0, 0, -1 } },   { { -0.5f, 0.5f, 0.0f }, { 1, 1, 0 }, { 0, 0, -1 } } };
+			{ { -0.5f, -0.5f, 0.0f }, { 0, 0, 0 }, { 0, 0, -1 } }, { { 0.5f, -0.5f, 0.0f }, { 1, 0, 0 }, { 0, 0, -1 } },
+			{ { 0.5f, 0.5f, 0.0f }, { 1, 1, 0 }, { 0, 0, -1 } },   { { -0.5f, 0.5f, 0.0f }, { 0, 1, 0 }, { 0, 0, -1 } } };
 		vector<GLuint> i = { 0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6 };
 		return new Mesh(v, i);
 	}
@@ -80,6 +80,7 @@ void StageScene::LoadScene(AppContext& ctx) {
 	if (meshChache.find("SpriteQuad") == meshChache.end()) meshChache["SpriteQuad"] = MakeSpriteQuad();
 	MakeProgram("Paper");   // Standard 조명 + 종이 텍스처
 	MakeProgram("Sprite");  // 투명 배경 그림 (알파 테스트)
+	MakeProgram("Sky");     // 그림책 하늘 (세로 그러데이션)
 	ProceduralTextures::CreateAll();
 
 	// 레벨 파일에서 이름으로 고르는 재질 (프로토타입 텍스처. 이후 직접 그린 그림으로 교체)
@@ -100,10 +101,30 @@ void StageScene::LoadScene(AppContext& ctx) {
 	AddPaper("CheckOff", vec4(0.66f, 0.66f, 0.66f, 1.0f));
 	AddPaper("CheckOn", vec4(0.98f, 0.78f, 0.18f, 1.0f));
 	AddPaper("Lamp", vec4(1.0f, 0.88f, 0.48f, 1.0f));
-	AddSprite("DollSprite", kDoll);
+	AddSprite("DollSprite", kCharacterBase);   // 캐릭터 시안 (C 키로 바꿈)
 	AddSprite("PageSprite", kPage);
 
-	// 팝업북 배경 판
+	// 팝업북 꾸미기 (StoryDecor)
+	AddSprite("PropAtlas", kPropAtlas);
+	AddSprite("BackAtlas", kBackdropAtlas);
+	AddSprite("Fringe", kFringe);
+	AddSprite("SkySprite", kPropAtlas);
+	AddSprite("Petal", kPropAtlas);
+	AddPaper("GrassPaper", vec4(0.56f, 0.76f, 0.44f, 1.0f));
+	AddPaper("BookPage", vec4(0.97f, 0.93f, 0.84f, 1.0f), kPageLines, 0.14f);
+	AddPaper("BookEdge", vec4(0.92f, 0.87f, 0.76f, 1.0f));
+	AddPaper("BookEdge2", vec4(0.99f, 0.96f, 0.88f, 1.0f));
+	if (materialChache.find("Sky") == materialChache.end()) {
+		Material* sky = new Material(shaders["Sky"]);
+		sky->SetInt("paperTex", kPaper);
+		sky->SetVec3("skyTop", vec3(0.6f, 0.79f, 0.94f));
+		sky->SetVec3("skyBottom", vec3(0.99f, 0.94f, 0.84f));
+		sky->SetFloat("skyY0", -6.0f);
+		sky->SetFloat("skyY1", 8.0f);
+		materialChache["Sky"] = sky;
+	}
+
+	// (예전) 팝업북 배경 판 색
 	AddPaper("BgMountain", vec4(0.76f, 0.79f, 0.87f, 1.0f));
 	AddPaper("BgCloud", vec4(1.0f, 1.0f, 1.0f, 1.0f));
 	AddPaper("BgHill", vec4(0.82f, 0.89f, 0.76f, 1.0f));     // 옅게: 2D에서 구덩이 뒤가 땅처럼 보이지 않도록

@@ -11,5 +11,5 @@ void main()
 {
 	vec4 t = texture(spriteTex, uv);
 	if (t.a < 0.5) discard;
-	FragColor = vec4(t.rgb * tColor.rgb, 1.0);
+	FragColor = vec4(t.rgb * tColor.rgb, tColor.a);   // alpha: FadeRenderer (fade out)
 }

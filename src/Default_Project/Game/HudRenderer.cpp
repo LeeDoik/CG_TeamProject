@@ -102,6 +102,7 @@ void HudRenderer::Awake() {
 	rectLoc = glGetUniformLocation(program, "rect");
 	colorLoc = glGetUniformLocation(program, "color");
 	screenLoc = glGetUniformLocation(program, "screen");
+	modeLoc = glGetUniformLocation(program, "mode");
 
 	// 0~1 단위 사각형 (삼각형 2개)
 	const float quad[] = { 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1 };
@@ -194,6 +195,8 @@ void HudRenderer::DrawPlayHud() {
 	char stage[24];
 	if (game->GetPage() <= 1) snprintf(stage, sizeof(stage), "TUTORIAL");
 	else snprintf(stage, sizeof(stage), "STAGE %d", game->GetPage() - 1);
+	float sw = TextWidth(stage, 3.4f * ui) + 36.0f * ui;
+	Frame(W * 0.5f - sw * 0.5f, y0 - 6.0f * ui, sw, 7.0f * 3.4f * ui + 20.0f * ui, 3.0f * ui, kInk, kCream);
 	TextCentered(stage, W * 0.5f, y0 + 4.0f * ui, 3.4f * ui, kInk);
 
 	// 오른쪽 위: 페이지 조각 n/4
@@ -201,6 +204,7 @@ void HudRenderer::DrawPlayHud() {
 	snprintf(buf, sizeof(buf), "%d/%d", game->GetFragments(), game->GetTotalFragments());
 	float fc = 4.5f * ui;
 	float fx = W - 24.0f * ui - TextWidth(buf, fc);
+	Frame(fx - 50.0f * ui, y0 - 10.0f * ui, W - fx + 40.0f * ui - 24.0f * ui + 10.0f * ui, 7.0f * fc + 20.0f * ui, 3.0f * ui, kInk, kCream);
 	Text(buf, fx, y0, fc, kInk);
 	PageIcon(fx - 40.0f * ui, y0 - 2.0f * ui, ui);
 
@@ -290,6 +294,74 @@ void HudRenderer::DrawEnding() {
 	DrawButtons();
 }
 
+// 스테이지 시작 때 장 제목 리본: "PAGE 2" + 영문 부제, 2.8초 동안 보였다가 흐려진다
+void HudRenderer::DrawChapterBanner() {
+	GameState st = game->GetState();
+	if (st != GameState::Playing && st != GameState::Transition) return;
+	float t = game->GetLevelTime();
+	if (t > 2.8f || game->GetSubtitle().empty()) return;
+	float a = std::clamp(std::min(t / 0.3f, (2.8f - t) / 0.6f), 0.0f, 1.0f);
+	float drop = (1.0f - std::min(t / 0.35f, 1.0f)) * 30.0f * ui;
+	char page[16];
+	snprintf(page, sizeof(page), "PAGE %d", game->GetPage());
+	const char* sub = game->GetSubtitle().c_str();
+	float sc = 6.0f * ui, pc = 3.0f * ui;
+	float bw = std::max(TextWidth(sub, sc), TextWidth(page, pc)) + 90.0f * ui, bh = 7.0f * sc + 7.0f * pc + 44.0f * ui;
+	float bx = (W - bw) * 0.5f, by = H * 0.16f - drop;
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	vec4 gold(kGold.r, kGold.g, kGold.b, a), cream(kCream.r, kCream.g, kCream.b, a), ink(kInk.r, kInk.g, kInk.b, a);
+	Rect(bx - 26.0f * ui, by + 18.0f * ui, 30.0f * ui, bh - 36.0f * ui, gold);                // 리본 꼬리
+	Rect(bx + bw - 4.0f * ui, by + 18.0f * ui, 30.0f * ui, bh - 36.0f * ui, gold);
+	Rect(bx, by, bw, bh, ink);
+	Rect(bx + 4.0f * ui, by + 4.0f * ui, bw - 8.0f * ui, bh - 8.0f * ui, cream);
+	Rect(bx + 10.0f * ui, by + 10.0f * ui, bw - 20.0f * ui, 2.0f * ui, gold);
+	Rect(bx + 10.0f * ui, by + bh - 12.0f * ui, bw - 20.0f * ui, 2.0f * ui, gold);
+	TextCentered(page, W * 0.5f, by + 16.0f * ui, pc, vec4(0.55f, 0.42f, 0.2f, a));
+	TextCentered(sub, W * 0.5f, by + 24.0f * ui + 7.0f * pc, sc, ink);
+	glDisable(GL_BLEND);
+}
+
+// 페이지 넘김: 클리어하면 글줄이 적힌 책장이 오른쪽에서 화면을 덮고, 다음 장에서 왼쪽으로 마저 넘어간다
+void HudRenderer::DrawPageTurn() {
+	float cover = game->GetPageCover(), reveal = game->GetPageReveal();
+	if (cover <= 0.0f && reveal <= 0.0f) return;
+	auto ease = [](float x) { return x * x * (3.0f - 2.0f * x); };
+	bool covering = cover > 0.0f;
+	float x0, x1;
+	if (covering) { x0 = W * (1.0f - ease(cover)); x1 = W + 10.0f; }
+	else { x0 = -10.0f; x1 = W * ease(reveal); }
+
+	// 넘어가는 종이가 장면에 드리우는 그림자
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	for (int i = 0; i < 12; ++i) {
+		float w = 7.0f * ui, alpha = 0.32f * (1.0f - i / 12.0f);
+		if (covering) Rect(x0 - (i + 1) * w, 0, w, H, vec4(0.15f, 0.10f, 0.05f, alpha));
+		else Rect(x1 + i * w, 0, w, H, vec4(0.15f, 0.10f, 0.05f, alpha));
+	}
+	glDisable(GL_BLEND);
+	Rect(x0, 0, x1 - x0, H, kCream);
+
+	// 책장 글줄
+	float margin = 90.0f * ui, lineGap = 34.0f * ui;
+	int row = 0;
+	for (float y = 110.0f * ui; y < H - 110.0f * ui; y += lineGap, ++row) {
+		float lx = std::max(x0 + margin, margin), rx = std::min(x1 - margin, W - margin);
+		float seg = 0.0f;
+		for (float x = margin; x < W - margin; x += seg + 16.0f * ui) {
+			seg = (40.0f + 70.0f * std::fmod(row * 0.37f + x * 0.013f, 1.0f)) * ui;
+			float a0 = std::max(x, lx), a1 = std::min(x + seg, rx);
+			if (a1 > a0) Rect(a0, y, a1 - a0, 5.0f * ui, vec4(0.72f, 0.68f, 0.60f, 1.0f));
+		}
+	}
+
+	// 넘어가는 가장자리: 말린 종이 느낌의 음영
+	float edge = covering ? x0 : x1;
+	Rect(edge - (covering ? 0.0f : 22.0f * ui), 0, 22.0f * ui, H, vec4(0.88f, 0.82f, 0.70f, 1.0f));
+	Rect(edge - (covering ? 0.0f : 3.0f * ui), 0, 3.0f * ui, H, kInk);
+}
+
 void HudRenderer::Render(Camera* activeCamera) {
 	if (!game || activeCamera != game->GetCamera()) return;
 
@@ -308,13 +380,26 @@ void HudRenderer::Render(Camera* activeCamera) {
 	glUniform2f(screenLoc, W, H);
 	glBindVertexArray(vao);
 
+	// 그림책 비네트: 화면 가장자리를 살짝 어둡게 (타이틀·엔딩 화면 제외)
+	GameState st = game->GetState();
+	if (st != GameState::Title && st != GameState::Ending) {
+		glEnable(GL_BLEND);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glUniform1i(modeLoc, 1);
+		Rect(0, 0, W, H, vec4(0.22f, 0.14f, 0.08f, 0.55f));
+		glUniform1i(modeLoc, 0);
+		glDisable(GL_BLEND);
+	}
+	glUniform1i(modeLoc, 0);
+
 	switch (game->GetState()) {
 	case GameState::Title:    DrawTitle(); break;
 	case GameState::Paused:   DrawPause(); break;
 	case GameState::GameOver: DrawGameOver(); break;
 	case GameState::Ending:   DrawEnding(); break;
-	default:                  DrawPlayHud(); break;
+	default:                  DrawPlayHud(); DrawChapterBanner(); break;
 	}
+	DrawPageTurn();
 
 	glBindVertexArray(0);
 	glEnable(GL_DEPTH_TEST);

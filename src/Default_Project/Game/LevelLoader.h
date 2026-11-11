@@ -12,6 +12,8 @@ struct LevelHint { float x0 = 0.0f; float x1 = 0.0f; std::string text; };
 
 struct LevelData {
 	std::string name = "Stage";
+	std::string subtitle;            // 장 제목 (영문 대문자, 화면 리본에 표시)
+	std::string theme = "day";      // 분위기: day, afternoon, sunset, night
 	int page = 1;                  // 이 스테이지에서 얻는 조각 번호 (튜토리얼 1, 스테이지 1은 2 ...)
 	std::string next;              // 다음 레벨 파일 이름 (비어 있으면 마지막 스테이지)
 	float killY = -8.0f;           // 플레이어가 이 높이보다 아래로 떨어지면 낙사

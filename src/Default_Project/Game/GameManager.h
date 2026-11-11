@@ -5,6 +5,7 @@
 #include "GameTypes.h"
 #include "LevelLoader.h"
 #include "DebugTools.h"
+#include "StoryDecor.h"
 
 class Object;
 class Camera;
@@ -47,6 +48,11 @@ public:
 	int GetFragments() const { return fragments; }
 	int GetTotalFragments() const;
 	int GetPage() const { return level.page; }
+	const std::string& GetSubtitle() const { return level.subtitle; }
+	float GetLevelTime() const { return clock; }
+	// 페이지 넘김 연출: cover(0~1) = 책장이 화면을 덮는 정도, reveal(0~1) = 다음 장을 드러내는 중 남은 정도
+	float GetPageCover() const;
+	float GetPageReveal() const { return pageReveal / kPageRevealTime; }
 	GameState GetState() const { return state; }
 	float GetTime() const { return clock; }
 	float GetRealTime() const { return realClock; }
@@ -68,6 +74,7 @@ private:
 		vec3 amplitude{ 0.0f };   // 움직이는 발판: 왕복 폭
 		float period = 0.0f;      // 움직이는 발판: 주기(초). 0이면 고정
 		vec3 delta{ 0.0f };       // 이번 프레임에 움직인 양 (올라탄 플레이어를 같이 옮김)
+		std::vector<FadeRenderer*> caps;   // 위에 올린 잔디 (반투명 같이 맞춤)
 		Box GetBox() const { return Box::FromCenterSize(center, size); }
 	};
 	struct Hazard { Box box; };
@@ -82,11 +89,12 @@ private:
 	};
 	struct Checkpoint { Object* flag = nullptr; vec3 foot{ 0.0f }; bool active = false; };
 	struct Pickup { Object* obj = nullptr; vec3 pos{ 0.0f }; bool taken = false; };
-	struct Backdrop { Object* obj = nullptr; vec3 pos{ 0.0f }; float z2D = 0.0f, z3D = 0.0f; };
 
 	// 카메라
 	Object* cameraObj = nullptr;
 	Camera* camera = nullptr;
+	Light* sunLight = nullptr;
+	Light* fillLight = nullptr;
 	vec3 camFocus{ 0.0f };
 
 	// 플레이어
@@ -123,6 +131,10 @@ private:
 	float realClock = 0.0f;      // 항상 흐르는 시간 (메뉴 깜빡임 등)
 	float playTime = 0.0f;       // 엔딩에 보여 줄 클리어 시간
 	int selectedButton = 0;
+	float pageReveal = 0.0f;     // 다음 장이 드러나는 남은 시간
+	static constexpr float kPageRevealTime = 0.8f;
+	int characterStyle = 0;      // 캐릭터 시안 번호 (C 키로 바꿈)
+	float characterMsgTimer = 0.0f;
 
 	// 레벨
 	LevelData level;
@@ -133,7 +145,7 @@ private:
 	std::vector<Worm> worms;
 	std::vector<Checkpoint> checkpoints;
 	std::vector<Pickup> pickups;
-	std::vector<Backdrop> backdrops;
+	StoryDecor decor;                    // 팝업북 꾸미기
 	std::vector<Object*> levelObjects;   // 레벨을 바꿀 때 지울 오브젝트 (만든 순서)
 	std::vector<Light*> levelLights;
 	std::string lastTitle;
@@ -155,7 +167,6 @@ private:
 	void CreatePersistentObjects();
 	void LoadLevel(std::string file, bool resetHp);
 	void ClearLevel();
-	void BuildBackdrop(float minX, float maxX);
 
 	// 화면 흐름
 	void StartGame(std::string file);
@@ -163,6 +174,7 @@ private:
 	void HandleMenu();
 	void ActivateMenu(MenuAction action);
 	bool HandleDebugKeys();
+	void SetCharacterStyle(int style);
 
 	// 진행
 	void ResetPlayerAt(vec3 p);

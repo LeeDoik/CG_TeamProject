@@ -1,7 +1,9 @@
 # 스테이지 3: 움직이는 발판 3개 → 깊이가 다른 기둥 계단(책벌레) → 책벌레가 있는 긴 벽 → 지그재그 가시와 2D 받침대
 # 형식은 tutorial.txt 맨 위 주석과 docs/스테이지1_구성.md 참고 (x y z = 중심, w h d = 크기)
 
-name 스테이지 3
+name 스테이지 3
+subtitle STARRY NIGHT
+theme night
 page 4
 killY -10
 start 0 0 0

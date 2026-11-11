@@ -60,6 +60,12 @@ bool LoadLevelFile(const string& path, LevelData& out) {
 			if (ReadFloats(ss, v, 1)) out.page = static_cast<int>(v[0]);
 			else fail("page 번호가 필요합니다");
 		}
+		else if (kind == "subtitle") {
+			out.subtitle = RestOfLine(ss);
+		}
+		else if (kind == "theme") {
+			ss >> out.theme;
+		}
 		else if (kind == "next") {
 			ss >> out.next;
 		}

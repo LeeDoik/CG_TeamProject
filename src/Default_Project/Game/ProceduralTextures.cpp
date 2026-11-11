@@ -1,4 +1,6 @@
 ﻿#include "ProceduralTextures.h"
+#include "CharacterArt.h"
+#include "StoryArt.h"
 #include <gl/glew.h>
 #include <vector>
 #include <cmath>
@@ -175,4 +177,21 @@ void ProceduralTextures::CreateAll() {
 	Upload(kWall, MakeWall(), true);
 	Upload(kDoll, MakeDoll(), false);
 	Upload(kPage, MakePage(), false);
+	Image props(StoryArt::kAtlasW, StoryArt::kAtlasH);
+	props.px = StoryArt::DrawPropAtlas();
+	Upload(kPropAtlas, props, false);
+	Image back(StoryArt::kAtlasW, StoryArt::kAtlasH);
+	back.px = StoryArt::DrawBackdropAtlas();
+	Upload(kBackdropAtlas, back, false);
+	Image fringe(StoryArt::kFringeW, StoryArt::kFringeH);
+	fringe.px = StoryArt::DrawFringe();
+	Upload(kFringe, fringe, true);
+	Image pageLines(256, 256);
+	pageLines.px = StoryArt::DrawPageLines();
+	Upload(kPageLines, pageLines, true);
+	for (int i = 0; i < CharacterArt::kCount; ++i) {
+		Image img(CharacterArt::kWidth, CharacterArt::kHeight);
+		img.px = CharacterArt::Draw(i);
+		Upload(kCharacterBase + i, img, false);
+	}
 }

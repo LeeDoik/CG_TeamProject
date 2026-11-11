@@ -10,7 +10,9 @@
 # 좌표: x 오른쪽, y 위, z 화면 쪽(+) / 안쪽(-). 블록 한 칸 = 1
 # 플레이어: 0.7 x 1.2 x 0.5, 점프 높이 약 2, 점프 거리 약 3.5, 3D 게이지 5초
 
-name 스테이지 1
+name 스테이지 1
+subtitle AFTERNOON MEADOW
+theme afternoon
 page 2
 next stage2.txt
 killY -7

@@ -1,7 +1,9 @@
 # 스테이지 2: 지그재그 가시밭(게이지 나눠 쓰기) → 좁은 뒷길의 책벌레 → 엘리베이터 → 벽 뒤 공중 발판(한 번에)
 # 형식은 tutorial.txt 맨 위 주석과 docs/스테이지1_구성.md 참고 (x y z = 중심, w h d = 크기)
 
-name 스테이지 2
+name 스테이지 2
+subtitle SUNSET CLIFFS
+theme sunset
 page 3
 next stage3.txt
 killY -9
