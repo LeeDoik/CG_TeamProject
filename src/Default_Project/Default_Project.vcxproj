@@ -128,6 +128,8 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
+    <!-- Keep the x64 compiler, linker and PDB tools on the same native host. -->
+    <PreferredToolArchitecture Condition="'$(Platform)'=='x64' and '$(PreferredToolArchitecture)'==''">x64</PreferredToolArchitecture>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{48741449-957d-4a82-8a1f-9b66718ae6c7}</ProjectGuid>
     <RootNamespace>DefaultProject</RootNamespace>

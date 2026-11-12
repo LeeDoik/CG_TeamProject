@@ -1,0 +1,11 @@
+# Camera-only regression: a front overhang covers the head during the depth handoff.
+name Camera occlusion
+subtitle CAMERA OCCLUSION
+theme day
+page 1
+killY -6
+start 1 0 0
+block 5 -0.5 0 20 1 8 Paper
+block 1 2.5 2 4 0.8 3 Card
+block 8 2.5 2 2 0.8 3 Card
+fragment 13 1 0

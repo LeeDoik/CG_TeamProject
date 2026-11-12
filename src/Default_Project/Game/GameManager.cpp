@@ -24,6 +24,8 @@
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
+#include <fstream>
+#include "json.hpp"
 using namespace std;
 using namespace glm;
 
@@ -114,6 +116,7 @@ void GameManager::Awake() {
 }
 
 void GameManager::Start() {
+	fixedClock = !GetEnvVar("POPUP_FIXED_DT").empty();
 	// 테스트용 환경 변수: 첫 레벨 바꾸기, 입력 재생, 상태 로그, 자동 캡처
 	string levelOverride = GetEnvVar("POPUP_LEVEL");
 	if (!levelOverride.empty()) firstLevel = levelOverride;
@@ -364,7 +367,7 @@ void GameManager::LoadLevel(string file, bool resetHp) {
 	state = GameState::Playing;
 	stateTimer = 0.0f;
 	clock = 0.0f;
-	cout << "[게임] " << file << " 시작 (실행 후 " << (startTime >= 0.0 ? glfwGetTime() - startTime : 0.0) << "초)" << endl;
+	cout << "[게임] " << file << " 시작 (실행 후 " << (startTime >= 0.0 ? (fixedClock ? gameObject->ctx.time : glfwGetTime()) - startTime : 0.0) << "초)" << endl;
 }
 
 // ======================================================================
@@ -473,7 +476,7 @@ bool GameManager::HandleDebugKeys() {
 
 void GameManager::Update(float dt) {
 	realClock += dt;
-	double now = glfwGetTime();
+	double now = fixedClock ? gameObject->ctx.time : glfwGetTime();
 	if (startTime < 0.0) startTime = now;
 	double elapsed = now - startTime;
 	InputManager& input = gameObject->ctx.inputManager;
@@ -483,7 +486,7 @@ void GameManager::Update(float dt) {
 	}
 	// F12 또는 POPUP_CAPTURE 시각 → 이번 프레임을 다 그린 뒤 스크린샷 저장
 	if (input.GetKeyDown(GLFW_KEY_F12)) captureRequested = true;
-	while (nextCapture < captureTimes.size() && captureTimes[nextCapture] <= elapsed) {
+	while (nextCapture < captureTimes.size() && captureTimes[nextCapture] <= elapsed + 1e-9) {
 		captureRequested = true;
 		++nextCapture;
 	}
@@ -571,6 +574,26 @@ void GameManager::OnFrameRendered() {
 	name << dir << "/shot_" << captureCount << ".bmp";
 	if (SaveScreenshotBMP(name.str(), screenSize.width, screenSize.height)) cout << "[캡처] " << name.str() << endl;
 	else cout << "[캡처] 저장 실패: " << name.str() << endl;
+	if (!GetEnvVar("POPUP_CAPTURE_METADATA").empty()) {
+		const auto& ctx = gameObject->ctx;
+		const char* states[] = { "Title", "Playing", "Transition", "Paused", "StageClear", "GameOver", "Ending" };
+		nlohmann::json record = {
+			{"file", "shot_" + to_string(captureCount) + ".bmp"},
+			{"time", ctx.time - startTime}, {"dt", ctx.deltaTime},
+			{"state", states[static_cast<int>(state)]},
+			{"mode", mode == ViewMode::View3D ? "3D" : "2D"}, {"viewT", viewT},
+			{"position", {pos.x, pos.y, pos.z}},
+			{"width", screenSize.width}, {"height", screenSize.height},
+			{"renderer", reinterpret_cast<const char*>(glGetString(GL_RENDERER))},
+			{"glVersion", reinterpret_cast<const char*>(glGetString(GL_VERSION))}
+		};
+		record["playerOnTop"] = OnTopRenderer::drawOnTop;
+		record["solidAlpha"] = nlohmann::json::array();
+		for (const auto& solid : solids) record["solidAlpha"].push_back(solid.renderer ? solid.renderer->alpha : 1.0f);
+		ofstream manifest(dir + "/capture_manifest.jsonl", ios::app);
+		manifest << record.dump() << '\n';
+		if (!manifest) cerr << "[capture] Failed to write capture metadata." << endl;
+	}
 }
 
 void GameManager::ResetPlayerAt(vec3 p) {
@@ -926,19 +949,26 @@ void GameManager::SyncVisuals(float dt) {
 
 // 3D에서 카메라와 플레이어 사이를 가리는 발판·벽은 반투명하게
 void GameManager::UpdateWallFade(float dt) {
-	Transform* camTr = cameraObj->GetComponent<Transform>();
-	vec3 eye = camTr->worldPosition;
-	bool check = viewT >= 0.5f && state != GameState::Title;
-	float rate = std::min(1.0f, 8.0f * dt);
+	const vec3 eye = cameraObj->GetComponent<Transform>()->worldPosition;
+	const vec3 eye3D = camFocus + kCamOffset3D;
+	const bool check = viewT > 0.0f && state != GameState::Title;
+	const bool prepare3D = state == GameState::Transition && targetMode == ViewMode::View3D && OnTopRenderer::drawOnTop;
+	const float rate = 1.0f - std::exp(-8.0f * std::max(dt, 0.0f));
+	const float visibleAlpha = 0.3f;
 	for (auto& s : solids) {
 		if (!s.renderer) continue;
-		float target = 1.0f;
-		if (check) {
-			Box b = s.GetBox();
-			if (SegmentHitsBox(eye, pos, b) || SegmentHitsBox(eye, pos + vec3(0.0f, 0.5f, 0.0f), b)) target = 0.3f;
-		}
+		const Box box = s.GetBox();
+		auto coversPlayer = [&](vec3 from) {
+			return SegmentHitsBox(from, pos, box) || SegmentHitsBox(from, pos + vec3(0.0f, 0.5f, 0.0f), box);
+		};
+		const bool covering = check && coversPlayer(eye);
+		// Start fading the destination view's blockers while 2D still protects the doll.
+		const bool preparing = prepare3D && coversPlayer(eye3D);
+		const float target = covering || preparing ? visibleAlpha : 1.0f;
 		s.renderer->alpha += (target - s.renderer->alpha) * rate;
-		for (FadeRenderer* c : s.caps) c->alpha = s.renderer->alpha;   // 위에 올린 잔디도 같이
+		// A newly occluding wall must not hide the player during interpolation.
+		if (covering && !OnTopRenderer::drawOnTop) s.renderer->alpha = std::min(s.renderer->alpha, visibleAlpha);
+		for (FadeRenderer* cap : s.caps) cap->alpha = s.renderer->alpha;
 	}
 }
 
@@ -1004,14 +1034,16 @@ bool GameManager::FindGroundTop(float& outTop) const {
 				vec3(pos.x + half.x * 0.6f, feet + 0.05f, pos.z + half.z * 0.6f) };
 	bool found = false;
 	float best = -1e9f;
+	float surfaceLift = 0.0f;
 	for (const auto& s : solids) {
 		Box b = s.GetBox();
 		if (b.max.y > feet + 0.05f) continue;
 		if (BoxesOverlap(column, b, ViewMode::View3D) && b.max.y > best) {
 			best = b.max.y;
+			surfaceLift = s.caps.empty() ? 0.0f : 0.08f; // Rendered grass cap, not collision height.
 			found = true;
 		}
 	}
-	outTop = best;
+	outTop = best + surfaceLift;
 	return found;
 }

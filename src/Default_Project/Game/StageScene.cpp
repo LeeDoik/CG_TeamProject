@@ -57,6 +57,7 @@ namespace {
 		m->SetVec4("tColor", color);
 		m->SetInt("paperTex", unit);
 		m->SetFloat("texScale", scale);
+		m->SetInt("meadowSurface", name == "GrassPaper" ? 1 : 0);
 		materialChache[name] = m;
 	}
 
@@ -65,6 +66,8 @@ namespace {
 		Material* m = new Material(shaders["Sprite"]);
 		m->SetVec4("tColor", vec4(1.0f));
 		m->SetInt("spriteTex", unit);
+		m->SetInt("alignBackdropBase", name == "BackAtlas" ? 1 : 0);
+		m->SetVec3("backdropFoot", vec3(0.0f, -6.0f, -10.7f));
 		materialChache[name] = m;
 	}
 }
@@ -110,8 +113,8 @@ void StageScene::LoadScene(AppContext& ctx) {
 	AddSprite("Fringe", kFringe);
 	AddSprite("SkySprite", kPropAtlas);
 	AddSprite("Petal", kPropAtlas);
-	AddPaper("GrassPaper", vec4(0.56f, 0.76f, 0.44f, 1.0f));
-	AddPaper("BookPage", vec4(0.97f, 0.93f, 0.84f, 1.0f), kPageLines, 0.14f);
+	AddPaper("GrassPaper", vec4(0.62f, 0.80f, 0.46f, 1.0f));
+	AddPaper("BookPage", vec4(0.97f, 0.93f, 0.84f, 1.0f), kPageLines, 0.065f);
 	AddPaper("BookEdge", vec4(0.92f, 0.87f, 0.76f, 1.0f));
 	AddPaper("BookEdge2", vec4(0.99f, 0.96f, 0.88f, 1.0f));
 	if (materialChache.find("Sky") == materialChache.end()) {

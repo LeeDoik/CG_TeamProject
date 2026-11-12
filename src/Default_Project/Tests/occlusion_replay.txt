@@ -1,0 +1,5 @@
+5.0 E down
+5.05 E up
+7.0 E down
+7.05 E up
+8.4 quit

@@ -91,7 +91,7 @@ bool InputReplay::Load(const string& path) {
 
 bool InputReplay::Apply(double now, InputManager& input) {
 	bool quit = false;
-	while (next < events.size() && events[next].time <= now) {
+	while (next < events.size() && events[next].time <= now + 1e-9) {
 		const Event& e = events[next++];
 		if (e.quit) quit = true;
 		else input.SetKey(e.key, e.down);

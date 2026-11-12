@@ -4,6 +4,10 @@ using namespace std;
 /////////////씬 임포트/////////////
 #include "Default_Scene.h"
 #include "StageScene.h"
+#include "DebugTools.h"
+#include <cmath>
+#include <cstdlib>
+#include <cstdint>
 ///////////////////////////////////
 
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -25,7 +29,23 @@ ScreenSize screenSize{ 1920, 1080 };
 map<string, Mesh*> meshChache;
 map<string, Material*> materialChache;
 
+bool suppressLiveInput = false;
+
 int main(int argc, char** argv) {
+	// Opt-in deterministic capture clock. Normal play keeps its real-time clock.
+	double fixedDt = 0.0;
+	const string fixedDtText = GetEnvVar("POPUP_FIXED_DT");
+	if (!fixedDtText.empty()) {
+		char* end = nullptr;
+		fixedDt = strtod(fixedDtText.c_str(), &end);
+		if (*end != '\0' || !std::isfinite(fixedDt) || fixedDt <= 0.0 || fixedDt > 0.05) {
+			cerr << "POPUP_FIXED_DT must be a number in (0, 0.05]." << endl;
+			return 2;
+		}
+		srand(0);
+	}
+	suppressLiveInput = fixedDt > 0.0 && !GetEnvVar("POPUP_REPLAY").empty();
+	uint64_t simulationFrame = 0;
 	//GLFW 초기화
 	if (!glfwInit()) {
 		cerr << "GLFW 초기화 실패" << endl;
@@ -57,6 +77,7 @@ int main(int argc, char** argv) {
 
 	//컨텍스트 설정
 	glfwMakeContextCurrent(window);
+	if (fixedDt > 0.0) glfwSwapInterval(0);
 
 	//GLEW 초기화
 	glewExperimental = GL_TRUE;	//최신 기능 사용
@@ -154,7 +175,7 @@ int main(int argc, char** argv) {
 	ColliderManager colliderManager(ctx);
 
 	//시간 초기화
-	ctx.time = glfwGetTime();
+	ctx.time = fixedDt > 0.0 ? 0.0 : glfwGetTime();
 
 	/////////////////////////씬 로드/////////////////////////
 
@@ -169,8 +190,8 @@ int main(int argc, char** argv) {
 
 	while (!glfwWindowShouldClose(window)) {
 		//시간 계산
-		double currentTime = glfwGetTime();
-		ctx.deltaTime = currentTime - ctx.time;
+		double currentTime = fixedDt > 0.0 ? (++simulationFrame * fixedDt) : glfwGetTime();
+		ctx.deltaTime = fixedDt > 0.0 ? fixedDt : currentTime - ctx.time;
 		ctx.deltaTime = std::min(ctx.deltaTime, 0.05); //델타타임 제한(너무 큰 값 방지)
 		ctx.time = currentTime;
 
@@ -269,6 +290,7 @@ int main(int argc, char** argv) {
 
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+	if (suppressLiveInput) return;
 	AppContext* ctx = static_cast<AppContext*>(glfwGetWindowUserPointer(window));
 	if (!ctx) return;
 	
@@ -278,6 +300,7 @@ void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
+	if (suppressLiveInput) return;
 	AppContext* ctx = static_cast<AppContext*>(glfwGetWindowUserPointer(window));
 	if (!ctx) return;
 
@@ -287,6 +310,7 @@ void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos)
 {
+	if (suppressLiveInput) return;
 	AppContext* ctx = static_cast<AppContext*>(glfwGetWindowUserPointer(window));
 	if (!ctx) return;
 

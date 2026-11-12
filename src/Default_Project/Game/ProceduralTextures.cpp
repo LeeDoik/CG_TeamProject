@@ -183,6 +183,11 @@ void ProceduralTextures::CreateAll() {
 	Image back(StoryArt::kAtlasW, StoryArt::kAtlasH);
 	back.px = StoryArt::DrawBackdropAtlas();
 	Upload(kBackdropAtlas, back, false);
+	// Packed cutout cells have no mip gutters: do not sample neighbouring cells.
+	glActiveTexture(GL_TEXTURE0 + kBackdropAtlas);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+	glActiveTexture(GL_TEXTURE0);
 	Image fringe(StoryArt::kFringeW, StoryArt::kFringeH);
 	fringe.px = StoryArt::DrawFringe();
 	Upload(kFringe, fringe, true);

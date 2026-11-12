@@ -66,5 +66,5 @@ private:
 	std::vector<Orbit> glows;      // 등불 빛무리
 
 	Object* SpawnQuad(const std::string& name, Mesh* mesh, const std::string& material, vec3 pos, vec3 scale, bool isLevelObject, bool fade);
-	void PlaceProp(int kind, float height, vec3 base);
+	FadeRenderer* PlaceProp(int kind, float height, vec3 base, bool fade = false);
 };

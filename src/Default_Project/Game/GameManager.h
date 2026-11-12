@@ -152,6 +152,7 @@ private:
 
 	// 테스트 도구 (환경 변수 POPUP_LEVEL, POPUP_REPLAY, POPUP_LOG, POPUP_CAPTURE)
 	InputReplay replay;
+	bool fixedClock = false;
 	bool debugLog = false;
 	double startTime = -1.0;
 	double nextLogTime = 0.0;

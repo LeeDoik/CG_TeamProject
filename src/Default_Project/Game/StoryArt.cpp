@@ -200,11 +200,17 @@ namespace {
 		pt.Shape(shape, col, 2.0f);
 	}
 
+	// Repeat the complete silhouettes across both texture boundaries. This keeps
+	// the contour continuous, including the paper rim, when adjacent panels meet.
 	void HillsBack(Painter& pt) {
 		V2 p = pt.p;
-		float h = std::min({ Circle(p, 110, 340, 168), Circle(p, 300, 372, 196), Circle(p, 470, 340, 156) });
+		float h = 1e9f;
+		for (float offset : { -512.0f, 0.0f, 512.0f }) {
+			V2 q{ p.x + offset, p.y };
+			h = std::min(h, std::min({ Circle(q, 110, 340, 168), Circle(q, 300, 372, 196), Circle(q, 470, 340, 156) }));
+		}
 		Cutout(pt, h, { 0.66f, 0.82f, 0.52f });
-		if (h <= -2.0f && h > -14.0f) pt.c = { 0.76f, 0.88f, 0.60f };                      // 위쪽 밝은 띠
+		if (h <= -2.0f && h > -14.0f) pt.c = { 0.76f, 0.88f, 0.60f };
 		for (int k = 0; k < 14; ++k) {
 			float fx = 30 + k * 34.0f, fy = 230 - (k % 3) * 14.0f;
 			if (h <= -16.0f && Circle(p, fx, fy, 3.2f) <= 0.0f) pt.c = (k % 2) ? Rgb{ 1.0f, 0.95f, 0.70f } : Rgb{ 1.0f, 0.78f, 0.84f };
@@ -216,36 +222,51 @@ namespace {
 		struct M { float px, py, l, r; Rgb c; };
 		const M ms[] = { { 120, 70, 0, 250, { 0.64f, 0.68f, 0.84f } }, { 440, 92, 320, 560, { 0.60f, 0.64f, 0.80f } }, { 290, 36, 140, 450, { 0.56f, 0.60f, 0.78f } } };
 		float all = 1e9f;
-		for (const M& m : ms) all = std::min(all, Poly(p, { { m.px, m.py }, { m.l, 262 }, { m.r, 262 } }));
+		auto shape = [&](const M& m, float offset) {
+			return Poly({ p.x + offset, p.y }, { { m.px, m.py }, { m.l, 262 }, { m.r, 262 } });
+		};
+		for (const M& m : ms)
+			for (float offset : { -512.0f, 0.0f, 512.0f }) all = std::min(all, shape(m, offset));
 		pt.Fill(all - 8.0f, { 0.99f, 0.98f, 0.95f });
 		for (const M& m : ms) {
-			float d = Poly(p, { { m.px, m.py }, { m.l, 262 }, { m.r, 262 } });
-			pt.Shape(d, m.c, 2.0f);
-			float snow = m.py + 42.0f + 6.0f * std::sin(p.x / 7.0f);
-			if (d <= -2.0f && p.y < snow) pt.c = { 0.97f, 0.97f, 1.0f };
-			if (d <= -2.0f && p.y >= snow && p.x > m.px) pt.c = Mix(m.c, { 0.4f, 0.42f, 0.6f }, 0.18f);   // 그늘 면
+			for (float offset : { -512.0f, 0.0f, 512.0f }) {
+				float d = shape(m, offset), x = p.x + offset;
+				pt.Shape(d, m.c, 2.0f);
+				float snow = m.py + 42.0f + 6.0f * std::sin(x / 7.0f);
+				if (d <= -2.0f && p.y < snow) pt.c = { 0.97f, 0.97f, 1.0f };
+				if (d <= -2.0f && p.y >= snow && x > m.px) pt.c = Mix(m.c, { 0.4f, 0.42f, 0.6f }, 0.18f);
+			}
 		}
 	}
 
 	void ForestBack(Painter& pt) {
 		V2 p = pt.p;
-		float all = RoundBox(p, 256, 238, 260, 22, 0);
-		for (int k = 0; k < 9; ++k) all = std::min(all, Circle(p, 30 + k * 58.0f, 168 + (k % 2) * 20.0f, 44));
-		for (int k = 0; k < 8; ++k) {
-			float x = 58 + k * 58.0f;
-			all = std::min(all, Poly(p, { { x, 96 + (k % 3) * 10.0f }, { x - 30, 200 }, { x + 30, 200 } }));
+		float all = 216.0f - p.y;
+		for (float offset : { -512.0f, 0.0f, 512.0f }) {
+			V2 q{ p.x + offset, p.y };
+			for (int k = 0; k < 8; ++k) {
+				all = std::min(all, Circle(q, 32 + k * 64.0f, 168 + (k % 2) * 20.0f, 44));
+				float x = 64 + k * 64.0f;
+				all = std::min(all, Poly(q, { { x, 96 + (k % 3) * 10.0f }, { x - 30, 200 }, { x + 30, 200 } }));
+			}
 		}
 		pt.Fill(all - 8.0f, { 0.99f, 0.98f, 0.95f });
-		pt.Shape(RoundBox(p, 256, 238, 260, 22, 0), { 0.42f, 0.62f, 0.46f }, 2.0f);
-		for (int k = 0; k < 8; ++k) {
-			float x = 58 + k * 58.0f;
-			pt.Shape(Poly(p, { { x, 96 + (k % 3) * 10.0f }, { x - 30, 200 }, { x + 30, 200 } }), { 0.40f, 0.60f, 0.46f }, 2.0f);
+		pt.Shape(216.0f - p.y, { 0.42f, 0.62f, 0.46f }, 2.0f);
+		for (float offset : { -512.0f, 0.0f, 512.0f }) {
+			V2 q{ p.x + offset, p.y };
+			for (int k = 0; k < 8; ++k) {
+				float x = 64 + k * 64.0f;
+				pt.Shape(Poly(q, { { x, 96 + (k % 3) * 10.0f }, { x - 30, 200 }, { x + 30, 200 } }), { 0.40f, 0.60f, 0.46f }, 2.0f);
+			}
 		}
-		for (int k = 0; k < 9; ++k) {
-			Rgb c = (k % 2) ? Rgb{ 0.52f, 0.72f, 0.52f } : Rgb{ 0.47f, 0.68f, 0.50f };
-			float d = Circle(p, 30 + k * 58.0f, 168 + (k % 2) * 20.0f, 44);
-			pt.Shape(d, c, 2.0f);
-			if (d <= -2.0f && Circle(p, 18 + k * 58.0f, 152 + (k % 2) * 20.0f, 18) <= 0.0f) pt.c = Mix(c, kWhite, 0.18f);
+		for (float offset : { -512.0f, 0.0f, 512.0f }) {
+			V2 q{ p.x + offset, p.y };
+			for (int k = 0; k < 8; ++k) {
+				Rgb c = (k % 2) ? Rgb{ 0.52f, 0.72f, 0.52f } : Rgb{ 0.47f, 0.68f, 0.50f };
+				float d = Circle(q, 32 + k * 64.0f, 168 + (k % 2) * 20.0f, 44);
+				pt.Shape(d, c, 2.0f);
+				if (d <= -2.0f && Circle(q, 20 + k * 64.0f, 152 + (k % 2) * 20.0f, 18) <= 0.0f) pt.c = Mix(c, kWhite, 0.18f);
+			}
 		}
 	}
 
@@ -321,6 +342,14 @@ std::vector<unsigned char> StoryArt::DrawBackdropAtlas() {
 			pt.p = { x - col * kBackCellW + 0.5f, y - row * kBackCellH + 0.5f };
 			DrawBackdrop(row * kBackCols + col, pt);
 			cv.PutPainter(x, y, pt, 0.0f, 0.06f);
+			// Fade to plain backing paper at the bottom: extending a noisy texel
+			// would turn the grain and outlines into long vertical streaks.
+			int index = row * kBackCols + col;
+			if (index != Town && pt.p.y > 242.0f && pt.on) {
+				const Rgb backing[] = { { 0.64f, 0.79f, 0.50f }, { 0.56f, 0.60f, 0.77f }, { 0.41f, 0.60f, 0.44f } };
+				float blend = std::clamp((pt.p.y - 242.0f) / 12.0f, 0.0f, 1.0f);
+				cv.Put(x, y, Mix(pt.c, backing[index], blend));
+			}
 		}
 	return cv.px;
 }
@@ -330,16 +359,29 @@ std::vector<unsigned char> StoryArt::DrawPageLines() {
 	const int N = 256;
 	Canvas cv(N, N);
 	for (int y = 0; y < N; ++y) {
-		int line = y / 16, inLine = y % 16;
 		for (int x = 0; x < N; ++x) {
-			float v = 0.96f + 0.04f * Grain(x * 1.0f, y * 1.0f);
-			if (inLine >= 9 && inLine <= 11) {
-				int word = (x + line * 37) / 22;
-				int gap = (x + line * 37) % 22;
-				bool ink = gap < 14 + static_cast<int>(6 * Grain(word * 7.0f, line * 3.0f));
-				if (ink) v *= 0.80f;
+			V2 p{ x + 0.5f, y + 0.5f };
+			float v = 0.96f + 0.04f * Grain(p.x, p.y);
+			Rgb c{ v, v * 0.98f, v * 0.94f };
+			// Short printed paragraphs leave space for a botanical book illustration.
+			bool paragraph = (y > 24 && y < 76) || (y > 198 && y < 234);
+			if (paragraph && y % 10 >= 6 && y % 10 <= 7 && x > 24 && x < 232) {
+				int line = y / 10, word = (x + line * 17) / 28;
+				if ((x + line * 17) % 28 < 14 + 8 * Grain(word * 7.0f, line * 3.0f)) c = Mix(c, { 0.49f, 0.46f, 0.39f }, 0.25f);
 			}
-			cv.Put(x, y, { v, v * 0.98f, v * 0.94f });
+			float stem = Segment(p, 108, 181, 145, 101, 1.0f);
+			float leaves = 1e9f;
+			for (int k = 0; k < 4; ++k) {
+				float sy = 170 - k * 17.0f, sx = 113 + k * 8.0f;
+				leaves = std::min(leaves, EllipseRot(p, sx - 10, sy - 10, 18, 7, 0.65f));
+				leaves = std::min(leaves, EllipseRot(p, sx + 14, sy - 1, 18, 7, -0.65f));
+			}
+			if (leaves < 0) c = Mix(c, { 0.48f, 0.62f, 0.40f }, 0.32f);
+			if (stem < 0) c = Mix(c, { 0.36f, 0.48f, 0.30f }, 0.40f);
+			// Fine corner rules frame the print without suggesting a playable platform.
+			if (((x == 16 || x == 239) && (y < 46 || y > 210) && y > 16 && y < 239) ||
+				((y == 16 || y == 239) && (x < 46 || x > 210) && x > 16 && x < 239)) c = Mix(c, { 0.66f, 0.54f, 0.37f }, 0.3f);
+			cv.Put(x, y, c);
 		}
 	}
 	return cv.px;

@@ -1,0 +1,4 @@
+# Stationary camera transition: capture at 4.5, 5.25, and 5.75 seconds.
+5.0 E down
+5.05 E up
+6.1 quit

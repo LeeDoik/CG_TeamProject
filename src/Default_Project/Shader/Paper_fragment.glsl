@@ -5,6 +5,40 @@ in vec3 FragPos;
 in vec3 Normal;
 
 uniform vec4 tColor;
+uniform int meadowSurface;
+
+float meadowHash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+float meadowNoise(vec2 p) {
+    vec2 i = floor(p), f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(meadowHash(i), meadowHash(i + vec2(1, 0)), f.x),
+               mix(meadowHash(i + vec2(0, 1)), meadowHash(i + vec2(1, 1)), f.x), f.y);
+}
+vec3 meadowColor(vec3 base, vec2 p) {
+    // Broad paper patches, a narrow worn trail, and tiny printed grass marks.
+    float patch = meadowNoise(p * 0.48);
+    base *= mix(vec3(0.83, 0.94, 0.81), vec3(1.12, 1.06, 0.94), patch);
+    float center = 0.18 * sin(p.x * 0.42) + 0.08 * sin(p.x * 1.3);
+    float edge = abs(p.y - center) + (meadowNoise(p * 3.2) - 0.5) * 0.14;
+    float aa = max(fwidth(edge), 0.012);
+    float trail = 1.0 - smoothstep(0.40 - aa, 0.55 + aa, edge);
+    vec3 pathColor = mix(vec3(0.75, 0.69, 0.46), vec3(0.86, 0.80, 0.57), patch);
+    base = mix(base, pathColor, trail * 0.83);
+    vec2 cell = floor(p * 2.0), q = fract(p * 2.0) - 0.5;
+    float seed = meadowHash(cell);
+    q -= vec2(meadowHash(cell + 9.1), meadowHash(cell + 4.7)) * 0.28 - 0.14;
+    float blade = min(abs(q.x - q.y * 0.38), abs(q.x + q.y * 0.5));
+    float lineAA = max(fwidth(blade), 0.014);
+    float mark = (1.0 - smoothstep(0.012, 0.012 + lineAA, blade)) *
+                 (1.0 - smoothstep(0.06, 0.16, abs(q.y))) * step(0.28, seed);
+    base = mix(base, base * vec3(0.68, 0.80, 0.60), mark * (1.0 - trail) * 0.60);
+    float dotDistance = length(q - vec2(0.10, 0.08));
+    float flower = (1.0 - smoothstep(0.022, 0.022 + max(fwidth(dotDistance), 0.012), dotDistance)) * step(0.86, seed);
+    return mix(base, vec3(0.95, 0.88, 0.61), flower * (1.0 - trail));
+}
+
 // [Game] paper texture: world-space planar UV, so boxes of any size tile evenly
 uniform sampler2D paperTex;
 uniform float texScale;				
@@ -91,6 +125,8 @@ void main()
 		finalLighting += (ambient + diffuse + specular);
 	}
 
-	vec3 result = finalLighting * vec3(tColor) * paper;
+	vec3 surfaceColor = vec3(tColor) * paper;
+	if (meadowSurface == 1 && norm.y > 0.5) surfaceColor = meadowColor(surfaceColor, FragPos.xz);
+	vec3 result = finalLighting * surfaceColor;
 	FragColor = vec4(result, tColor.a);
 }

@@ -69,10 +69,33 @@ namespace {
 
 	Mesh* BackdropMesh(int index) {
 		int col = index % StoryArt::kBackCols, row = index / StoryArt::kBackCols;
-		float u0 = col * float(StoryArt::kBackCellW) / StoryArt::kAtlasW, u1 = u0 + float(StoryArt::kBackCellW) / StoryArt::kAtlasW;
-		float vTop = 1.0f - row * float(StoryArt::kBackCellH) / StoryArt::kAtlasH;
-		float vBottom = vTop - float(StoryArt::kBackCellH) / StoryArt::kAtlasH;
-		return QuadMesh("Backdrop_" + to_string(index), -0.5f, 0.0f, 0.5f, 1.0f, u0, vBottom, u1, vTop);
+		float u0 = (col * StoryArt::kBackCellW + 0.5f) / StoryArt::kAtlasW, u1 = ((col + 1) * StoryArt::kBackCellW - 0.5f) / StoryArt::kAtlasW;
+		float vTop = 1.0f - (row * StoryArt::kBackCellH + 0.5f) / StoryArt::kAtlasH;
+		float vBottom = 1.0f - ((row + 1) * StoryArt::kBackCellH - 0.5f) / StoryArt::kAtlasH;
+		if (index == StoryArt::Town) return QuadMesh("Backdrop_" + to_string(index), -0.5f, 0.0f, 0.5f, 1.0f, u0, vBottom, u1, vTop);
+		const string key = "BackdropSkirt_" + to_string(index);
+		auto found = meshChache.find(key);
+		if (found != meshChache.end()) return found->second;
+		vector<Vertex> vertices;
+		vector<GLuint> indices;
+		// The vertex shader aligns this bottom row with the forest foot in screen space.
+		for (int side = 0; side < 2; ++side) {
+			vec3 n(0, 0, side == 0 ? 1.0f : -1.0f);
+			for (int rowIndex = 0; rowIndex < 3; ++rowIndex) {
+				float y = rowIndex == 0 ? -1.0f : (rowIndex == 1 ? 0.0f : 1.0f);
+				float v = rowIndex == 2 ? vTop : vBottom;
+				vertices.push_back({ { -0.5f, y, 0 }, { u0, v, rowIndex == 0 ? 1.0f : 0.0f }, n });
+				vertices.push_back({ { 0.5f, y, 0 }, { u1, v, rowIndex == 0 ? 1.0f : 0.0f }, n });
+			}
+			for (GLuint rowIndex = 0; rowIndex < 2; ++rowIndex) {
+				GLuint a = side * 6 + rowIndex * 2;
+				if (side == 0) indices.insert(indices.end(), { a, a + 1, a + 3, a, a + 3, a + 2 });
+				else indices.insert(indices.end(), { a, a + 3, a + 1, a, a + 2, a + 3 });
+			}
+		}
+		Mesh* mesh = new Mesh(vertices, indices);
+		meshChache[key] = mesh;
+		return mesh;
 	}
 
 	// 발판 앞면 위쪽에 늘어뜨리는 물결 잔디 (1칸에 무늬 한 번 반복)
@@ -168,11 +191,12 @@ const StoryTheme& StoryDecor::ApplyTheme(const string& name) {
 	return theme;
 }
 
-void StoryDecor::PlaceProp(int kind, float height, vec3 base) {
+FadeRenderer* StoryDecor::PlaceProp(int kind, float height, vec3 base, bool fade) {
 	vec3 scale = StoryArt::IsSquareProp(kind) ? vec3(height, height, 1) : vec3(height * 0.5f, height, 1);
-	Object* o = SpawnQuad("Prop", PropMesh(kind), "PropAtlas", base, scale, true, false);
+	Object* o = SpawnQuad("Prop", PropMesh(kind), "PropAtlas", base, scale, true, fade);
 	o->GetComponent<Transform>()->SetLocalRotation(-88.0f, 0.0f, 0.0f);   // 처음에는 접혀 누워 있다
 	props.push_back({ o, base, 0.0f, 0.0f });
+	return o->GetComponent<FadeRenderer>();
 }
 
 void StoryDecor::BuildLevel(const LevelData& level, vector<vector<FadeRenderer*>>& blockCaps) {
@@ -197,14 +221,12 @@ void StoryDecor::BuildLevel(const LevelData& level, vector<vector<FadeRenderer*>
 		Object* o = SpawnQuad("Backdrop", BackdropMesh(index), "BackAtlas", vec3(x, y, z2D), vec3(w, h, 1), true, false);
 		layers.push_back({ o, vec3(x, y, z2D), z2D, z3D });
 	};
-	int i = 0;
-	for (float x = minX - 30; x < maxX + 30; x += 15.0f + 4.0f * H(i, 21), ++i) layer(StoryArt::Mountains, x, -5.5f, 18.0f, 9.0f, -11.8f, -36.0f);
+	// Matching periodic silhouettes meet exactly: no random gaps or coplanar overlaps.
+	for (float x = minX - 60; x < maxX + 60; x += 18.0f) layer(StoryArt::Mountains, x, -5.5f, 18.0f, 9.0f, -11.8f, -36.0f);
 	layer(StoryArt::Town, minX + len * 0.38f, -5.2f, 15.0f, 7.5f, -11.5f, -27.0f);
 	layer(StoryArt::Town, minX + len * 0.86f, -5.2f, 15.0f, 7.5f, -11.5f, -27.0f);
-	i = 0;
-	for (float x = minX - 30; x < maxX + 30; x += 11.0f + 3.0f * H(i, 22), ++i) layer(StoryArt::Hills, x, -5.2f, 13.0f, 6.5f, -11.1f, -20.0f);
-	i = 0;
-	for (float x = minX - 30; x < maxX + 30; x += 10.0f + 3.0f * H(i, 23), ++i) layer(StoryArt::Forest, x, -6.0f, 12.0f, 5.5f, -10.7f, -14.0f);
+	for (float x = minX - 60; x < maxX + 60; x += 13.0f) layer(StoryArt::Hills, x, -5.2f, 13.0f, 6.5f, -11.1f, -20.0f);
+	for (float x = minX - 60; x < maxX + 60; x += 12.0f) layer(StoryArt::Forest, x, -6.0f, 12.0f, 5.5f, -10.7f, -14.0f);
 
 	// 페이지 조각 주위를 도는 반짝이 별 3개
 	for (const vec3& f : level.fragments) {
@@ -238,6 +260,29 @@ void StoryDecor::BuildLevel(const LevelData& level, vector<vector<FadeRenderer*>
 		Object* cap = SpawnQuad("Grass_Cap", meshChache["FlatCube"], "GrassPaper", vec3(b.center.x, top + 0.04f, b.center.z), vec3(b.size.x + 0.04f, 0.08f, b.size.z + 0.04f), true, true);
 		Object* fringe = SpawnQuad("Grass_Fringe", FringeMesh(b.size.x + 0.04f), "Fringe", vec3(b.center.x, top + 0.06f, z1 + 0.03f), vec3(1.0f), true, true);
 		blockCaps[bi] = { cap->GetComponent<FadeRenderer>(), fringe->GetComponent<FadeRenderer>() };
+
+		// Low interior accents reveal depth without concealing the walking lane or hazards.
+		for (float z = z0 + 0.8f; z < z1 - 0.6f; z += 1.5f) {
+			for (float x = x0 + 0.8f; x < x1 - 0.6f; x += 2.1f) {
+				int id = static_cast<int>(bi) * 10007 + static_cast<int>((x - x0) * 13 + (z - z0) * 197);
+				vec3 at(x + (H(id, 60) - 0.5f) * 0.4f, top + 0.085f, z);
+				if (std::abs(z) < 0.65f || onSpike(at.x, at.z, 0.45f) || H(id, 61) > 0.6f) continue;
+				bool blocked = false;
+				for (size_t other = 0; other < level.blocks.size(); ++other) {
+					if (other == bi) continue;
+					const auto& box = level.blocks[other];
+					if (box.center.y + box.size.y * 0.5f > top + 0.1f &&
+						box.center.y - box.size.y * 0.5f < top + 0.6f &&
+						std::abs(at.x - box.center.x) < box.size.x * 0.5f + 0.45f &&
+						std::abs(at.z - box.center.z) < box.size.z * 0.5f + 0.45f) blocked = true;
+				}
+				for (const auto& point : level.checkpoints) if (Len3(at - point) < 1.1f) blocked = true;
+				for (const auto& point : level.fragments) if (Len3(at - point) < 1.3f) blocked = true;
+				if (Len3(at - level.start) < 1.1f || blocked) continue;
+				int kind = H(id, 62) < 0.75f ? StoryArt::GrassTuft : StoryArt::Daisy;
+				blockCaps[bi].push_back(PlaceProp(kind, 0.3f + 0.13f * H(id, 63), at, true));
+			}
+		}
 
 		// 앞줄: 작은 풀·꽃 (발판 앞 가장자리)
 		for (float x = x0 + 0.45f; x < x1 - 0.35f; x += 0.8f + 1.5f * H(seed, 31), ++seed) {
@@ -367,5 +412,6 @@ void StoryDecor::Update(float dt, vec3 player, vec3 camFocus, float viewT, float
 
 	// 배경 판 벌어짐
 	float s = smoothstep(0.0f, 1.0f, viewT);
+	materialChache["BackAtlas"]->SetVec3("backdropFoot", vec3(0.0f, -6.0f, mix(-10.7f, -14.0f, s)));
 	for (auto& l : layers) l.obj->GetComponent<Transform>()->SetLocalPosition(l.pos.x, l.pos.y, mix(l.z2D, l.z3D, s));
 }
