@@ -44,3 +44,6 @@ Desktop.ini
 
 # ===== 게임 스크린샷·테스트 캡처 (로컬 전용) =====
 src/Default_Project/Screenshots/
+
+# ===== 엔진 분석 문서 (로컬 전용, 커밋하지 않음) =====
+docs/Default_Project_분석.md
