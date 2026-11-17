@@ -47,3 +47,9 @@ src/Default_Project/Screenshots/
 
 # ===== 엔진 분석 문서 (로컬 전용, 커밋하지 않음) =====
 docs/Default_Project_분석.md
+
+# ===== 수업 OpenGL 라이브러리 (src/Default_Project/dependencies) =====
+# 위의 [Bb]in/ · x64/ 규칙이 라이브러리 폴더까지 막지 않도록 다시 포함한다
+!src/Default_Project/dependencies/bin/
+!src/Default_Project/dependencies/bin/x64/
+!src/Default_Project/dependencies/lib/x64/
