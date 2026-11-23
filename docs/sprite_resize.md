@@ -1,8 +1,8 @@
 # PaperChild 게임용 리사이즈
 
-브랜치: `sprite-resize`. 게임 로직, 셰이더, 프로젝트 설정은 변경하지 않았다.
+작업 브랜치: `sprite-resize` (이후 LeeDoik_2에 포함). 이 단계에서는 게임 로직, 셰이더, 프로젝트 설정을 바꾸지 않고 그림 파일만 준비했다. 준비한 그림을 게임에 연결한 내용은 [sprite_renderer.md](sprite_renderer.md)에 있다.
 
-## 코드 조사
+## 코드 조사 (리사이즈 당시)
 
 - `Data_Structure/Vertex.h`: position/color/normal만 있고 UV가 없다.
 - `Utility/ObjImporter.cpp`: OBJ의 위치와 법선만 읽고 이미지/UV를 로드하지 않는다.
@@ -10,7 +10,7 @@
 - `main.cpp`: OpenGL 3.3 core, 깊이 테스트/컬링 활성화. 이미지 디코더, 텍스처 업로드, 알파 블렌딩 설정이 없다.
 - `Game_Scene.json`: Player는 Red 재질의 Cube, scale [0.35, 0.6, 0.25]. 스프라이트 쿼드 크기, 기대 이미지 경로, 프레임 전환 기능이 정의되지 않았다.
 
-따라서 이 결과는 연결용 에셋 준비 완료이며 게임에 연결된 상태는 아니다. 현재 로더가 지원하는 이미지 포맷은 없다.
+그래서 이 단계의 결과는 연결용 에셋 준비까지였다. 텍스처 로딩과 스프라이트 렌더러는 다음 단계([sprite_renderer.md](sprite_renderer.md))에서 추가했다.
 
 ## 출력 규격과 처리
 
@@ -20,9 +20,9 @@
 
 384×512는 원본의 3:4 비율을 유지하며, 대상 OpenGL 3.3에서 POT 강제 규격을 만들 필요가 없다. 9장 RGBA 비압축 메모리는 약 6.75MiB(원본 약 54MiB), mipmap 제외. 런타임 지원이 없는 atlas를 임의로 추가하지 않고 독립 프레임을 제공한다. **새 AI 생성 0장, 기존 원본 축소 및 패딩 9장**이다.
 
-원본 루트: `C:/TUKorea/4_2/Computer Graphics/CG_TeamProject/src/Default_Project/Assets/Characters/PaperChild/`
+원본 루트: 로컬 작업 폴더의 `src/Default_Project/Assets/Characters/PaperChild/` (1086×1448 원본 9장). 저장소에는 원본 중 `paper_child_idle_right.png`만 main 커밋 db4a809로 올라갔고, 그 파일의 SHA-256(`964fbea1…`)은 `manifest.json`에 적힌 idle 원본 해시와 같다. 게임에는 아래 384×512 출력본을 쓴다.
 
-출력 루트: 이 브랜치의 `src/Default_Project/Assets/Characters/PaperChild/`
+출력 루트: `src/Default_Project/Assets/Characters/PaperChild/`
 
 | 원본 → 출력 (이름 동일) | 원본 | 출력 |
 |---|---|---|
@@ -36,24 +36,24 @@
 | paper_child_hurt_right.png | 1086×1448 | 384×512 |
 | paper_child_clear_right.png | 1086×1448 | 384×512 |
 
-원본 `art_preview/paper_child_pose_lineup.png`(1902×356)와 `paper_child_walk_8fps.gif`(360×480)는 참고 프리뷰이며 게임 텍스처로 사용하지 않았다. 해당 원본들도 수정하지 않았다.
+원본과 함께 받은 참고 프리뷰 `paper_child_pose_lineup.png`(1902×356)와 `paper_child_walk_8fps.gif`(360×480)는 게임 텍스처로 쓰지 않았고 저장소에도 넣지 않았다. 원본들은 수정하지 않았다.
 
 ## 확인 및 재현
 
 - `tools/resize_paper_child.py`: Pillow 사용, 출력 크기/모드/알파/여백 검사 및 원본 SHA-256 불변 확인. 9장 통과.
 - `manifest.json`: 원본/출력 SHA-256, alpha bbox, 공통 pivot, 변환 규격.
-- `art_preview/sprite_resize/contact_sheet.png`: 1152×1632 체크무늬 배경 정적 검토 이미지. 직접 이미지로 확인했으며 모자/얼굴/옷 색감과 포즈를 유지하고 새 잘림은 보이지 않았다.
-- `art_preview/sprite_resize/walk_8fps.webp`: 384×512, 4프레임, 프레임당 125ms 검토용 애니메이션. 게임 파일이 아니며 실제 게임 재생 검증으로 간주하지 않는다.
-- **게임 내 스프라이트 스크린샷 없음**: 코드에 텍스처 렌더링 경로가 없어 파일 배치만으로 표시할 수 없다. 프리뷰를 게임 스크린샷으로 대체하지 않았다.
+- 검토용 이미지: 스크립트가 체크무늬 배경 모음(`contact_sheet.png`, 1152×1632)과 걷기 애니메이션(`walk_8fps.webp`, 384×512, 4프레임, 프레임당 125ms)을 `art_preview/sprite_resize/`에 만든다. 이 폴더는 로컬 검토용이라 `.gitignore`로 제외했다. 모음 이미지로 모자/얼굴/옷 색감과 포즈가 유지되고 새 잘림이 없는 것을 확인했다. 걷기 애니메이션은 게임 파일이 아니며 실제 게임 재생 검증으로 보지 않는다.
 - **Debug x64 빌드 성공(exit 0)**: VS 18 Community MSBuild로 `src/Default_Project/Default_Project.vcxproj /p:Configuration=Debug /p:Platform=x64 /v:minimal /nologo` 실행. C4819 인코딩, C4244/C4267 형 변환, LNK4098 런타임 라이브러리 경고가 있었다. 빌드를 위해 소스를 바꾸지 않았다.
-- 실행 파일 `src/Default_Project/x64/Debug/Default_Project.exe`를 프로젝트 디렉터리를 작업 디렉터리로 실행했다. **현재 게임 기준 화면** `art_preview/sprite_resize/game_baseline.jpg`(1099×648 캡처)에서 빨간 큐브 플레이어와 플랫폼 렌더링을 직접 확인했다. 새 스프라이트가 표시되는 증거는 아니며 이동/점프 수동 조작 검증도 하지 않았다. 확인용으로 띄운 게임 창은 종료했다.
+- 이 단계에서는 게임에 텍스처 렌더링 경로가 없어 플레이어는 여전히 빨간 큐브였다. 게임 안에서 스프라이트가 보이는 확인은 [sprite_renderer.md](sprite_renderer.md)에 있다.
 
-재현 명령(Pillow 필요):
+재현 명령(Pillow 필요, `--source`는 1086×1448 원본 9장이 있는 폴더):
 
 ```powershell
-python -X utf8 tools/resize_paper_child.py --source 'C:/TUKorea/4_2/Computer Graphics/CG_TeamProject/src/Default_Project/Assets/Characters/PaperChild'
+python -X utf8 tools/resize_paper_child.py --source '<원본 PaperChild 폴더>'
 ```
 
-## 후속 연결 제안 (미구현)
+## 후속 연결 (sprite_renderer.md에서 구현)
 
-PNG 디코더와 RGBA 텍스처 업로드, UV가 있는 3:4 쿼드, sampler2D 셰이더를 추가해야 한다. 이미지 좌표의 위/아래와 OpenGL UV 방향을 한 번만 뒤집고, `GL_CLAMP_TO_EDGE`, `GL_LINEAR`, straight-alpha용 `SRC_ALPHA/ONE_MINUS_SRC_ALPHA`를 적용한다. 투명 픽셀의 depth write 처리와 3D 뷰의 빌보드/컬링 정책도 정해야 한다. manifest의 공통 pivot을 쿼드 원점으로 사용하고 월드 크기는 플레이어 충돌체에 맞춰 별도로 정한다. 걷기 프레임은 01→02→03→04, 8fps를 초기값으로 권장하며 왼쪽은 UV 반전으로 처리할 수 있다. 이 manifest는 문서용이며 현재 게임에서 자동으로 읽히지 않는다.
+리사이즈 당시 제안한 연결 방법이다. PNG 디코더와 RGBA 텍스처 업로드, UV가 있는 3:4 쿼드, sampler2D 셰이더를 추가해야 한다. 이미지 좌표의 위/아래와 OpenGL UV 방향을 한 번만 뒤집고, `GL_CLAMP_TO_EDGE`, `GL_LINEAR`, straight-alpha용 `SRC_ALPHA/ONE_MINUS_SRC_ALPHA`를 적용한다. 투명 픽셀의 depth write 처리와 3D 뷰의 빌보드/컬링 정책도 정해야 한다. manifest의 공통 pivot을 쿼드 원점으로 사용하고 월드 크기는 플레이어 충돌체에 맞춰 별도로 정한다. 걷기 프레임은 01→02→03→04, 8fps를 초기값으로 권장하며 왼쪽은 UV 반전으로 처리할 수 있다.
+
+지금은 `Script/PlayerSpriteAnimator`가 실행할 때 `manifest.json`의 `canvas`, `pivot_output_top_left`, `content_rectangle`을 읽어 발 기준점과 크기를 정한다.
