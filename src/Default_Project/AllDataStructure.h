@@ -7,3 +7,4 @@
 #include "Object.h"
 #include "Scene.h"
 #include "ScreenSize.h"
+#include "Texture.h"
