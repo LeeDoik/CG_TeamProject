@@ -15,6 +15,8 @@ class Texture;
 //  - Transform의 회전·크기는 쓰지 않는다 (플레이어 Transform의 크기는 충돌 상자 크기다)
 //  - 앞·뒷면을 모두 그린다 (그리는 동안 면 컬링을 끈다)
 //  - 반투명 그림이라 불투명 물체를 다 그린 뒤에 그린다 (main.cpp DrawScene이 순서를 맞춘다)
+//  - 2D에서는 항상 앞에 보인다: 깊이 테스트에서만 카메라 쪽으로 당긴다 (GetDepthScale).
+//    그림 위치·크기와 충돌 상자는 그대로다. 3D에서는 실제 깊이대로 가려진다.
 class SpriteRenderer : public Component {
 public:
 	Texture* texture = nullptr;
@@ -24,11 +26,13 @@ public:
 	bool billboardY = false;			// true면 세로축으로 돌아 카메라를 본다
 	vec4 tint = vec4(1.0f);				// 그림 색에 곱하는 색
 	float alphaCutoff = 0.1f;			// 이보다 투명한 픽셀은 버린다 (깊이도 안 씀)
+	float depthPull2D = 0.9f;			// 2D에서 깊이 테스트할 때 카메라까지 거리를 줄이는 비율 (0 = 당기지 않음, 1보다 작게)
 
 	void Render(Camera* activeCamera) override;
 
 	vec3 GetAnchor();
 	mat4 GetModelMatrix(Camera* activeCamera);
+	float GetDepthScale(Camera* activeCamera);	// 깊이 테스트용 카메라 거리 배율 (1 = 실제 깊이)
 
 	static Component* CreateFromJson(Object* obj, const json& props, const map<string, Object*>& spawnedObjects);
 

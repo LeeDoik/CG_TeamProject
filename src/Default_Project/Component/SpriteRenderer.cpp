@@ -4,6 +4,7 @@
 #include "Transform.h"
 #include "Camera.h"
 #include "BoxCollider.h"
+#include "ViewTransition.h"
 #include <cmath>
 #include <gl/glm/gtc/type_ptr.hpp>
 #include <gl/glm/gtc/matrix_transform.hpp>
@@ -83,6 +84,25 @@ mat4 SpriteRenderer::GetModelMatrix(Camera* activeCamera) {
 	return model;
 }
 
+// 2D에서는 그림이 앞쪽 물체(계단 앞면 z=+1, 땅·벽 앞면 z=+3)에 가려지지 않게,
+// 깊이 테스트에서만 카메라까지 거리를 줄인 것처럼 계산한다 (Sprite_vertex.glsl의 depthScale).
+//  - 그림의 화면 위치·크기, 충돌 상자, Transform은 그대로다. 깊이 값만 바뀐다.
+//  - 0.9: 2D 카메라는 바라보는 점에서 50칸 떨어져 있으므로 깊이로는 카메라 앞 5칸, 즉 45칸 당긴다.
+//    장면 앞뒤 폭은 6칸(z -3 ~ +3)이고 3D에서 안쪽(z -2.75)으로 갔다가 2D로 돌아와도
+//    앞쪽 물체보다 확실히 앞이다. 1(카메라 바로 앞)까지 당기지 않는 것은
+//    스프라이트끼리의 앞뒤 순서를 남기고, near 평면(0.1칸) 밖으로 나가 잘리지 않게 하기 위해서다.
+//  - E 전환 중에는 ViewTransition이 카메라 회전·투영을 섞는 곡선(smoothstep(viewT))과 같이 줄어,
+//    3D에 가까워질수록 실제 깊이로 돌아온다. 3D(viewT = 1)에서는 1이라 전과 똑같이 그린다.
+float SpriteRenderer::GetDepthScale(Camera* activeCamera) {
+	float flat = 0.0f;	// 2D인 정도 (1 = 2D, 0 = 3D)
+
+	ViewTransition* view = activeCamera->gameObject->GetComponent<ViewTransition>();
+	if (view) flat = 1.0f - smoothstep(0.0f, 1.0f, view->GetViewT());
+	else if (activeCamera->isOrthographic) flat = 1.0f;
+
+	return 1.0f - depthPull2D * flat;
+}
+
 void SpriteRenderer::Render(Camera* activeCamera) {
 	if (!texture || !activeCamera) return;
 
@@ -99,6 +119,7 @@ void SpriteRenderer::Render(Camera* activeCamera) {
 	glUniform1i(glGetUniformLocation(program, "flipX"), flipX ? 1 : 0);
 	glUniform4fv(glGetUniformLocation(program, "tint"), 1, value_ptr(tint));
 	glUniform1f(glGetUniformLocation(program, "alphaCutoff"), alphaCutoff);
+	glUniform1f(glGetUniformLocation(program, "depthScale"), GetDepthScale(activeCamera));
 	glUniform1i(glGetUniformLocation(program, "spriteTex"), 0);
 
 	texture->Bind(0);
@@ -135,6 +156,7 @@ Component* SpriteRenderer::CreateFromJson(Object* obj, const json& props, const 
 	if (props.contains("flipX")) sr->flipX = props["flipX"];
 	if (props.contains("billboardY")) sr->billboardY = props["billboardY"];
 	if (props.contains("alphaCutoff")) sr->alphaCutoff = props["alphaCutoff"];
+	if (props.contains("depthPull2D")) sr->depthPull2D = props["depthPull2D"];
 	if (props.contains("tint")) sr->tint = vec4(props["tint"][0], props["tint"][1], props["tint"][2], props["tint"][3]);
 
 	return sr;
