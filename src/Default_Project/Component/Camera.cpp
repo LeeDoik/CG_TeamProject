@@ -34,6 +34,8 @@ mat4 Camera::GetViewMatrix() {
 }
 
 mat4 Camera::GetProjectionMatrix() {
+	if (useProjectionOverride) return projectionOverride;
+
 	if (isOrthographic) {
 		float halfWidth = width / 2.0f / 100.0f;
 		float halfHeight = height / 2.0f / 100.0f;

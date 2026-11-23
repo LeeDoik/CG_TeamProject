@@ -3,6 +3,7 @@ using namespace std;
 
 /////////////씬 임포트/////////////
 #include "Default_Scene.h"
+#include "Game_Scene.h"
 ///////////////////////////////////
 
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -147,8 +148,10 @@ int main(int argc, char** argv) {
 
 	/////////////////////////씬 로드/////////////////////////
 
-	Default_Scene defaultScene{screenSize};
-	defaultScene.LoadScene(ctx);
+	//Default_Scene defaultScene{screenSize};
+	//defaultScene.LoadScene(ctx);
+	Game_Scene gameScene{ screenSize };
+	gameScene.LoadScene(ctx);
 
 	////////////////////////메인 루프////////////////////////
 

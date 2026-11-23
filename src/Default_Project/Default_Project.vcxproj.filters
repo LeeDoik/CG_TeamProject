@@ -144,6 +144,18 @@
     <ClInclude Include="Data_Structure\LightType.h">
       <Filter>Data_Structure\Header</Filter>
     </ClInclude>
+    <ClInclude Include="Game_Scene.h">
+      <Filter>리소스 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="Script\CoreRules.h">
+      <Filter>Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Script\PlayerController.h">
+      <Filter>Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Script\ViewTransition.h">
+      <Filter>Script</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Component\MeshRenderer3D.cpp">
@@ -209,6 +221,18 @@
     <ClCompile Include="Component\Light.cpp">
       <Filter>Component\Source</Filter>
     </ClCompile>
+    <ClCompile Include="Game_Scene.cpp">
+      <Filter>리소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Script\CoreRules.cpp">
+      <Filter>Script</Filter>
+    </ClCompile>
+    <ClCompile Include="Script\PlayerController.cpp">
+      <Filter>Script</Filter>
+    </ClCompile>
+    <ClCompile Include="Script\ViewTransition.cpp">
+      <Filter>Script</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shader\Debug_fragment.glsl">
@@ -236,6 +260,9 @@
       <Filter>Shader</Filter>
     </None>
     <None Include="Default_Scene.json">
+      <Filter>리소스 파일</Filter>
+    </None>
+    <None Include="Game_Scene.json">
       <Filter>리소스 파일</Filter>
     </None>
   </ItemGroup>

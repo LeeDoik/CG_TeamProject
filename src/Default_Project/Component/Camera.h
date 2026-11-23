@@ -17,6 +17,10 @@ public:
 	int priority = 0; // 카메라 우선순위, 값이 높을수록 우선순위가 높음
 	bool isOrthographic = false;
 
+	//[Game] true이면 GetProjectionMatrix()가 projectionOverride를 그대로 돌려준다 (2D/3D 전환용, ViewTransition이 매 프레임 채움)
+	bool useProjectionOverride = false;
+	mat4 projectionOverride = mat4(1.0f);
+
 	//뷰 포트 별 Clear 설정
 	bool clearColorBuffer = true;
 	bool clearDepthBuffer = true;

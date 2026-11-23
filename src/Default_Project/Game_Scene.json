@@ -1,0 +1,216 @@
+{
+  "SceneName": "Game_Scene",
+  "Objects": [
+    {
+      "isValid": true,
+      "name": "MainCamera",
+      "parent": "",
+      "transform": {
+        "position": [ 0.0, 1.0, 50.0 ],
+        "rotation": [ 0.0, 180.0, 0.0 ],
+        "scale": [ 1.0, 1.0, 1.0 ]
+      },
+      "components": [
+        {
+          "type": "Camera",
+          "properties": {
+            "fov": 50.0,
+            "nearPlane": 0.1,
+            "farPlane": 300.0,
+            "backgroundColor": [ 0.96, 0.92, 0.84, 1.0 ]
+          }
+        },
+        {
+          "type": "ViewTransition",
+          "properties": {
+            "target": "Player"
+          }
+        }
+      ]
+    },
+    {
+      "isValid": true,
+      "name": "Directional Light",
+      "parent": "",
+      "transform": {
+        "position": [ 0.0, 10.0, 10.0 ],
+        "rotation": [ 120.0, 25.0, 0.0 ],
+        "scale": [ 1.0, 1.0, 1.0 ]
+      },
+      "components": [
+        {
+          "type": "Light",
+          "properties": {
+            "lightType": "Directional",
+            "lightColor": [ 1.0, 1.0, 1.0, 1.0 ],
+            "intensity": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "isValid": true,
+      "name": "Player",
+      "parent": "",
+      "transform": {
+        "position": [ 0.0, 1.5, 0.0 ],
+        "rotation": [ 0.0, 0.0, 0.0 ],
+        "scale": [ 0.35, 0.6, 0.25 ]
+      },
+      "components": [
+        {
+          "type": "MeshRenderer3D",
+          "properties": { "mesh": "Cube", "materials": [ "Red" ] }
+        },
+        {
+          "type": "BoxCollider",
+          "properties": { "center": [ 0.0, 0.0, 0.0 ], "size": [ 1.0, 1.0, 1.0 ], "isDebug": false }
+        },
+        {
+          "type": "PlayerController",
+          "properties": { "view": "MainCamera" }
+        },
+        {
+          "type": "RigidBody",
+          "properties": { "mass": 1.0, "useGravity": false }
+        }
+      ]
+    },
+    {
+      "isValid": true,
+      "name": "Ground",
+      "parent": "",
+      "transform": {
+        "position": [ 6.0, -0.5, 0.0 ],
+        "rotation": [ 0.0, 0.0, 0.0 ],
+        "scale": [ 15.0, 0.5, 3.0 ]
+      },
+      "components": [
+        {
+          "type": "MeshRenderer3D",
+          "properties": { "mesh": "Cube", "materials": [ "DarkGreen" ] }
+        },
+        {
+          "type": "BoxCollider",
+          "properties": { "center": [ 0.0, 0.0, 0.0 ], "size": [ 1.0, 1.0, 1.0 ] }
+        }
+      ]
+    },
+    {
+      "isValid": true,
+      "name": "LeftWall",
+      "parent": "",
+      "transform": {
+        "position": [ -9.5, 2.0, 0.0 ],
+        "rotation": [ 0.0, 0.0, 0.0 ],
+        "scale": [ 0.5, 2.0, 3.0 ]
+      },
+      "components": [
+        {
+          "type": "MeshRenderer3D",
+          "properties": { "mesh": "Cube", "materials": [ "DarkGray" ] }
+        },
+        {
+          "type": "BoxCollider",
+          "properties": { "center": [ 0.0, 0.0, 0.0 ], "size": [ 1.0, 1.0, 1.0 ] }
+        }
+      ]
+    },
+    {
+      "isValid": true,
+      "name": "Step1",
+      "parent": "",
+      "transform": {
+        "position": [ 4.0, 0.5, 0.0 ],
+        "rotation": [ 0.0, 0.0, 0.0 ],
+        "scale": [ 1.0, 0.5, 1.0 ]
+      },
+      "components": [
+        {
+          "type": "MeshRenderer3D",
+          "properties": { "mesh": "Cube", "materials": [ "LightGray" ] }
+        },
+        {
+          "type": "BoxCollider",
+          "properties": { "center": [ 0.0, 0.0, 0.0 ], "size": [ 1.0, 1.0, 1.0 ] }
+        }
+      ]
+    },
+    {
+      "isValid": true,
+      "name": "Step2",
+      "parent": "",
+      "transform": {
+        "position": [ 7.0, 1.0, 0.0 ],
+        "rotation": [ 0.0, 0.0, 0.0 ],
+        "scale": [ 1.0, 1.0, 1.0 ]
+      },
+      "components": [
+        {
+          "type": "MeshRenderer3D",
+          "properties": { "mesh": "Cube", "materials": [ "LightGray" ] }
+        },
+        {
+          "type": "BoxCollider",
+          "properties": { "center": [ 0.0, 0.0, 0.0 ], "size": [ 1.0, 1.0, 1.0 ] }
+        }
+      ]
+    },
+    {
+      "isValid": true,
+      "name": "BackBlock",
+      "parent": "",
+      "transform": {
+        "position": [ 11.0, 1.0, -2.5 ],
+        "rotation": [ 0.0, 0.0, 0.0 ],
+        "scale": [ 1.0, 1.0, 0.5 ]
+      },
+      "components": [
+        {
+          "type": "MeshRenderer3D",
+          "properties": { "mesh": "Cube", "materials": [ "Blue" ] }
+        },
+        {
+          "type": "BoxCollider",
+          "properties": { "center": [ 0.0, 0.0, 0.0 ], "size": [ 1.0, 1.0, 1.0 ] }
+        }
+      ]
+    },
+    {
+      "isValid": true,
+      "name": "FrontWall",
+      "parent": "",
+      "transform": {
+        "position": [ 16.0, 2.0, 1.5 ],
+        "rotation": [ 0.0, 0.0, 0.0 ],
+        "scale": [ 0.5, 2.0, 1.5 ]
+      },
+      "components": [
+        {
+          "type": "MeshRenderer3D",
+          "properties": { "mesh": "Cube", "materials": [ "DarkGray" ] }
+        },
+        {
+          "type": "BoxCollider",
+          "properties": { "center": [ 0.0, 0.0, 0.0 ], "size": [ 1.0, 1.0, 1.0 ] }
+        }
+      ]
+    },
+    {
+      "isValid": true,
+      "name": "BackDecor",
+      "parent": "",
+      "transform": {
+        "position": [ -3.0, 0.5, -2.0 ],
+        "rotation": [ 0.0, 45.0, 0.0 ],
+        "scale": [ 0.5, 0.5, 0.5 ]
+      },
+      "components": [
+        {
+          "type": "MeshRenderer3D",
+          "properties": { "mesh": "Cube", "materials": [ "Purple" ] }
+        }
+      ]
+    }
+  ]
+}
