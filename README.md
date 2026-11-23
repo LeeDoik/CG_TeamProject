@@ -6,10 +6,10 @@
 
 ## 팀원
 
-| 이름 | GitHub | 역할 |
-|------|--------|------|
-| 이도익 | [@LeeDoik](https://github.com/LeeDoik) | (역할) |
-| 임성진 | [@FakeZero00](https://github.com/FakeZero00) | (역할) |
+| 이름 | GitHub |
+|------|--------|
+| 이도익 | [@LeeDoik](https://github.com/LeeDoik) |
+| 임성진 | [@FakeZero00](https://github.com/FakeZero00) |
 
 ## 요구사항 요약
 
