@@ -1,0 +1,197 @@
+{
+  "format": "RGBA8 PNG, straight alpha",
+  "canvas": [
+    384,
+    512
+  ],
+  "resample": "premultiplied-alpha Lanczos",
+  "content_rectangle": [
+    6,
+    8,
+    372,
+    496
+  ],
+  "pivot_source_top_left": [
+    530,
+    1389
+  ],
+  "pivot_output_top_left": [
+    187.54696132596686,
+    483.7900552486188
+  ],
+  "generated_images": 0,
+  "resized_images": 9,
+  "frames": [
+    {
+      "file": "paper_child_clear_right.png",
+      "source_size": [
+        1086,
+        1448
+      ],
+      "output_size": [
+        384,
+        512
+      ],
+      "source_sha256": "02fabba4c65d93e554cca2b2b1e6594003033a625cdf212dc430b875332ff849",
+      "output_sha256": "73ce8c38903ecb7e49e133dd6967ddbd12c71abef9b1de92ef017575698d6f7d",
+      "alpha_bbox": [
+        33,
+        8,
+        350,
+        487
+      ]
+    },
+    {
+      "file": "paper_child_hurt_right.png",
+      "source_size": [
+        1086,
+        1448
+      ],
+      "output_size": [
+        384,
+        512
+      ],
+      "source_sha256": "86806cdc7b1740e20082bb1abb9d2afed8a783fd077b89eccf73281fc1eefa91",
+      "output_sha256": "122fd633bc683487b6558f4c53439f997f085fd346fc298b44c1d0fc294c1e8f",
+      "alpha_bbox": [
+        31,
+        20,
+        359,
+        487
+      ]
+    },
+    {
+      "file": "paper_child_idle_right.png",
+      "source_size": [
+        1086,
+        1448
+      ],
+      "output_size": [
+        384,
+        512
+      ],
+      "source_sha256": "964fbea1469f9a8c619a2fca7280027643dfb7a5c53e51fca846dbd2417c6d0a",
+      "output_sha256": "a3089caa6528555696485d46c6bacad7ff24da358e5cb5689aa9d9bff9addcba",
+      "alpha_bbox": [
+        51,
+        19,
+        364,
+        483
+      ]
+    },
+    {
+      "file": "paper_child_jump_fall_right.png",
+      "source_size": [
+        1086,
+        1448
+      ],
+      "output_size": [
+        384,
+        512
+      ],
+      "source_sha256": "d674885a12e9eb4040c7dfcf33c54c325218cfee6b36dcd2dee4e098fe68b5f6",
+      "output_sha256": "b542bbddb0729bd462a2fee8f126509341c9750445a79a2ccbebc9934d97ad57",
+      "alpha_bbox": [
+        21,
+        16,
+        353,
+        491
+      ]
+    },
+    {
+      "file": "paper_child_jump_rise_right.png",
+      "source_size": [
+        1086,
+        1448
+      ],
+      "output_size": [
+        384,
+        512
+      ],
+      "source_sha256": "2a8a8d2a7e494d398e7ee3dd8deb52ea90f86c5f3232b7cd33738ffbefe27943",
+      "output_sha256": "9e16e507edb9da01c9c6a828f361fb10c75b79e4a7afae74bdfd6ec5b6eafd6b",
+      "alpha_bbox": [
+        33,
+        21,
+        337,
+        451
+      ]
+    },
+    {
+      "file": "paper_child_walk_01_right.png",
+      "source_size": [
+        1086,
+        1448
+      ],
+      "output_size": [
+        384,
+        512
+      ],
+      "source_sha256": "0af7ec1811f9533bd50f8fefec13229d8524699bad8c1c7920fea359c23ba3ae",
+      "output_sha256": "0e732559a80bc6826c835f6ea391a4d398e3cab1498b14c1e65723f4a89d480e",
+      "alpha_bbox": [
+        34,
+        21,
+        293,
+        487
+      ]
+    },
+    {
+      "file": "paper_child_walk_02_right.png",
+      "source_size": [
+        1086,
+        1448
+      ],
+      "output_size": [
+        384,
+        512
+      ],
+      "source_sha256": "67a9c36cd25fb1afd3aab6afd4f408027121c9ed36940424f5dcedd1645e08d4",
+      "output_sha256": "378062c0d1f219b7fa28429008b77eaeaa8287269b87e2986bf1ac02d34f3440",
+      "alpha_bbox": [
+        34,
+        21,
+        301,
+        487
+      ]
+    },
+    {
+      "file": "paper_child_walk_03_right.png",
+      "source_size": [
+        1086,
+        1448
+      ],
+      "output_size": [
+        384,
+        512
+      ],
+      "source_sha256": "9802d8b6bad13fcde2a94cffc7be16f9e9b2f1d2bc1c864bfc59befbce4ae8d7",
+      "output_sha256": "b5a416541cf8b0c5e30effbce07d4f3865c31b931658b8e47018bccfa6f8f6bf",
+      "alpha_bbox": [
+        34,
+        21,
+        322,
+        487
+      ]
+    },
+    {
+      "file": "paper_child_walk_04_right.png",
+      "source_size": [
+        1086,
+        1448
+      ],
+      "output_size": [
+        384,
+        512
+      ],
+      "source_sha256": "e8a4d966421e768a672718e78652f53aaca4ad6d4baf35bbd0471b323c54ce65",
+      "output_sha256": "da800c180e58b896930e71dbd84ca5368bcc962b94986408a6db5814a824c5ee",
+      "alpha_bbox": [
+        34,
+        21,
+        296,
+        487
+      ]
+    }
+  ]
+}
