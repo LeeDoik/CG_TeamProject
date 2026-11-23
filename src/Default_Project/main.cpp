@@ -6,10 +6,6 @@ using namespace std;
 #include "Game_Scene.h"
 ///////////////////////////////////
 
-//[Test] 숨긴 창 자동 재생·캡처 (환경 변수를 줄 때만 켜짐, Utility/DebugAutoplay.h 참고)
-#include "DebugAutoplay.h"
-DebugAutoplay autoplay;
-
 void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void CursorPosCallback(GLFWwindow* window, double xpos, double ypos);
@@ -41,10 +37,6 @@ int main(int argc, char** argv) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	//[Test] 자동 재생 설정을 읽는다. POPUP_HEADLESS가 있으면 창을 숨긴 채 실행한다
-	autoplay.Init();
-	if (autoplay.headless) glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-
 	//윈도우 생성
 	GLFWwindow* window = glfwCreateWindow(screenSize.width, screenSize.height, "OpenGL Window", nullptr, nullptr);
 	if (!window) {
@@ -55,7 +47,6 @@ int main(int argc, char** argv) {
 
 	//컨텍스트 설정
 	glfwMakeContextCurrent(window);
-	if (autoplay.fixedDt > 0.0) glfwSwapInterval(0);	//[Test] 고정 dt 자동 재생은 수직 동기화를 기다리지 않는다
 
 	//GLEW 초기화
 	glewExperimental = GL_TRUE;	//최신 기능 사용
@@ -174,7 +165,6 @@ int main(int argc, char** argv) {
 		double currentTime = glfwGetTime();
 		ctx.deltaTime = currentTime - ctx.time;
 		ctx.deltaTime = std::min(ctx.deltaTime, 0.05); //델타타임 제한(너무 큰 값 방지)
-		if (autoplay.fixedDt > 0.0) ctx.deltaTime = autoplay.fixedDt; //[Test] 자동 재생은 고정 간격
 		ctx.time = currentTime;
 
 		//입력 처리
@@ -183,7 +173,6 @@ int main(int argc, char** argv) {
 
 		//이벤트 처리
 		glfwPollEvents();
-		autoplay.ApplyInput(ctx); //[Test] 자동 재생 스크립트의 키 입력
 
 		//Start 처리
 		for (auto& obj : ctx.Hierarchy) {
@@ -262,7 +251,6 @@ int main(int argc, char** argv) {
 
 		//화면 렌더링
 		DrawScene(window);
-		autoplay.EndFrame(window, ctx); //[Test] 프레임 번호, 종료 명령
 	}
 
 	/////////////////////////루프 종료/////////////////////////
@@ -400,9 +388,6 @@ void DrawScene(GLFWwindow* window)
 			if (obj->isValid) obj->Render(cam);
 		}
 	}
-
-	//[Test] 자동 재생 캡처 (버퍼 교체 전에 뒤 버퍼를 읽는다)
-	autoplay.Capture(window, *ctx);
 
 	//버퍼 스왑
 	glfwSwapBuffers(window);

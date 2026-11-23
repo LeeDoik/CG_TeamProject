@@ -162,9 +162,6 @@
     <ClInclude Include="Script\PlayerSpriteAnimator.h">
       <Filter>Script</Filter>
     </ClInclude>
-    <ClInclude Include="Utility\DebugAutoplay.h">
-      <Filter>Utility\Header</Filter>
-    </ClInclude>
     <ClInclude Include="Script\ViewTransition.h">
       <Filter>Script</Filter>
     </ClInclude>
@@ -250,9 +247,6 @@
     </ClCompile>
     <ClCompile Include="Script\PlayerSpriteAnimator.cpp">
       <Filter>Script</Filter>
-    </ClCompile>
-    <ClCompile Include="Utility\DebugAutoplay.cpp">
-      <Filter>Utility\Source</Filter>
     </ClCompile>
     <ClCompile Include="Utility\StbImage.cpp">
       <Filter>Utility\Source</Filter>
