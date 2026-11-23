@@ -54,6 +54,7 @@
     <ClInclude Include="Script\PlayerSpriteAnimator.h" />
     <ClInclude Include="Script\ViewTransition.h" />
     <ClInclude Include="Utility\ColliderManager.h" />
+    <ClInclude Include="Utility\DebugAutoplay.h" />
     <ClInclude Include="Utility\InputManager.h" />
     <ClInclude Include="Utility\ObjImporter.h" />
     <ClInclude Include="Utility\SceneLoader.h" />
@@ -85,6 +86,7 @@
     <ClCompile Include="Script\PlayerSpriteAnimator.cpp" />
     <ClCompile Include="Script\ViewTransition.cpp" />
     <ClCompile Include="Utility\ColliderManager.cpp" />
+    <ClCompile Include="Utility\DebugAutoplay.cpp" />
     <ClCompile Include="Utility\ObjImporter.cpp" />
     <ClCompile Include="Utility\SceneLoader.cpp" />
     <ClCompile Include="Utility\StbImage.cpp" />
