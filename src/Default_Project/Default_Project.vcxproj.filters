@@ -159,6 +159,9 @@
     <ClInclude Include="Data_Structure\Texture.h">
       <Filter>Data_Structure\Header</Filter>
     </ClInclude>
+    <ClInclude Include="Script\PlayerSpriteAnimator.h">
+      <Filter>Script</Filter>
+    </ClInclude>
     <ClInclude Include="Script\ViewTransition.h">
       <Filter>Script</Filter>
     </ClInclude>
@@ -241,6 +244,9 @@
     </ClCompile>
     <ClCompile Include="Data_Structure\Texture.cpp">
       <Filter>Data_Structure\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Script\PlayerSpriteAnimator.cpp">
+      <Filter>Script</Filter>
     </ClCompile>
     <ClCompile Include="Utility\StbImage.cpp">
       <Filter>Utility\Source</Filter>

@@ -13,3 +13,4 @@
 #include "ViewTransition.h"
 #include "PlayerController.h"
 #include "SpriteRenderer.h"
+#include "PlayerSpriteAnimator.h"

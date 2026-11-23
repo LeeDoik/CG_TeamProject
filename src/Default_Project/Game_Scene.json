@@ -59,12 +59,8 @@
       },
       "components": [
         {
-          "type": "MeshRenderer3D",
-          "properties": { "mesh": "Cube", "materials": [ "Red" ] }
-        },
-        {
           "type": "BoxCollider",
-          "properties": { "center": [ 0.0, 0.0, 0.0 ], "size": [ 1.0, 1.0, 1.0 ], "isDebug": false }
+          "properties": { "center": [ 0.0, 0.0, 0.0 ], "size": [ 2.0, 2.0, 2.0 ], "isDebug": false }
         },
         {
           "type": "PlayerController",
@@ -73,6 +69,14 @@
         {
           "type": "RigidBody",
           "properties": { "mass": 1.0, "useGravity": false }
+        },
+        {
+          "type": "SpriteRenderer",
+          "properties": { "alphaCutoff": 0.1, "billboardY": false }
+        },
+        {
+          "type": "PlayerSpriteAnimator",
+          "properties": { "folder": "Assets/Characters/PaperChild/", "walkFps": 8.0 }
         }
       ]
     },

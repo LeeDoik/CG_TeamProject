@@ -51,6 +51,7 @@
     <ClInclude Include="Script\TestScript.h" />
     <ClInclude Include="Script\CoreRules.h" />
     <ClInclude Include="Script\PlayerController.h" />
+    <ClInclude Include="Script\PlayerSpriteAnimator.h" />
     <ClInclude Include="Script\ViewTransition.h" />
     <ClInclude Include="Utility\ColliderManager.h" />
     <ClInclude Include="Utility\InputManager.h" />
@@ -81,6 +82,7 @@
     <ClCompile Include="Script\TestScript.cpp" />
     <ClCompile Include="Script\CoreRules.cpp" />
     <ClCompile Include="Script\PlayerController.cpp" />
+    <ClCompile Include="Script\PlayerSpriteAnimator.cpp" />
     <ClCompile Include="Script\ViewTransition.cpp" />
     <ClCompile Include="Utility\ColliderManager.cpp" />
     <ClCompile Include="Utility\ObjImporter.cpp" />
