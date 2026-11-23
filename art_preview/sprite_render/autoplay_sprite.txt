@@ -1,0 +1,53 @@
+# PaperChild 스프라이트 확인용 자동 재생 스크립트 (형식: src/Default_Project/Utility/DebugAutoplay.h)
+# 실행: art_preview/sprite_render/run_capture.ps1  (숨긴 창, 고정 dt 1/60초, 실제 PlayerController 입력 처리)
+# <프레임> <명령> [인자]   걷기 그림은 8fps라 7.5프레임마다 바뀐다
+
+# 1) 2D: 시작하면 떨어져 착지 → 가만히(오른쪽)
+60  shot 01_2d_idle_right.png
+
+# 2) 2D: 왼쪽으로 걷기 (좌우 반전). 61프레임에 걷기 시작 → 61 walk_01, 69 walk_02, 76 walk_03, 84 walk_04
+61  down A
+64  shot 02_2d_walk_01_left.png
+72  shot 03_2d_walk_02_left.png
+80  shot 04_2d_walk_03_left.png
+88  shot 05_2d_walk_04_left.png
+95  up A
+110 shot 06_2d_idle_left.png
+
+# 3) 2D: 오른쪽으로 조금 걷다가 점프 (오른쪽을 보는 상승·하강 그림)
+111 down D
+120 down SPACE
+121 up D
+130 shot 07_2d_jump_rise.png
+150 up SPACE
+152 shot 08_2d_jump_fall.png
+
+# 4) E: 2D → 3D 전환 (0.5초 = 30프레임). 중간 프레임과 끝난 뒤
+200 down E
+201 up E
+215 shot 09_transition_2d_to_3d_mid.png
+240 shot 10_3d_idle.png
+
+# 5) 3D: 오른쪽 + 안쪽(W)으로 걷기. 241 walk_01, 249 walk_02, 256 walk_03, 264 walk_04
+#    계단 뒤(z = -1.5)로 돌아서 파란 상자 앞까지 간다
+241 down D
+241 down W
+244 shot 11_3d_walk_01.png
+252 shot 12_3d_walk_02.png
+259 shot 13_3d_walk_03.png
+264 up W
+267 shot 14_3d_walk_04.png
+397 up D
+410 shot 15_3d_idle_front_of_blue_block.png
+
+# 6) 3D 점프
+420 down SPACE
+430 shot 16_3d_jump_rise.png
+450 up SPACE
+452 shot 17_3d_jump_fall.png
+
+# 7) E: 3D → 2D. 파란 상자(뒤쪽, z = -2.5) 앞에 겹쳐 선 2D 화면 = 투명 픽셀이 뒤 물체를 가리지 않는지
+480 down E
+481 up E
+520 shot 18_2d_over_blue_block.png
+530 quit
