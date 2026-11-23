@@ -230,6 +230,9 @@
     <ClCompile Include="Script\PlayerController.cpp">
       <Filter>Script</Filter>
     </ClCompile>
+    <ClCompile Include="Utility\StbImage.cpp">
+      <Filter>Utility\Source</Filter>
+    </ClCompile>
     <ClCompile Include="Script\ViewTransition.cpp">
       <Filter>Script</Filter>
     </ClCompile>
