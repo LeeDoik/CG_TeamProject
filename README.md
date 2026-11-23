@@ -8,8 +8,8 @@
 
 | 이름 | GitHub | 역할 |
 |------|--------|------|
-| (이름) | [@LeeDoik](https://github.com/LeeDoik) | (역할) |
-| (이름) | [@FakeZero00](https://github.com/FakeZero00) | (역할) |
+| 이도익 | [@LeeDoik](https://github.com/LeeDoik) | (역할) |
+| 임성진 | [@FakeZero00](https://github.com/FakeZero00) | (역할) |
 
 ## 요구사항 요약
 
