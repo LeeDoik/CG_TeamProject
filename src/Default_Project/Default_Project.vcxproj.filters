@@ -153,6 +153,12 @@
     <ClInclude Include="Script\PlayerController.h">
       <Filter>Script</Filter>
     </ClInclude>
+    <ClInclude Include="Component\SpriteRenderer.h">
+      <Filter>Component\Header</Filter>
+    </ClInclude>
+    <ClInclude Include="Data_Structure\Texture.h">
+      <Filter>Data_Structure\Header</Filter>
+    </ClInclude>
     <ClInclude Include="Script\ViewTransition.h">
       <Filter>Script</Filter>
     </ClInclude>
@@ -230,6 +236,12 @@
     <ClCompile Include="Script\PlayerController.cpp">
       <Filter>Script</Filter>
     </ClCompile>
+    <ClCompile Include="Component\SpriteRenderer.cpp">
+      <Filter>Component\Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Data_Structure\Texture.cpp">
+      <Filter>Data_Structure\Source</Filter>
+    </ClCompile>
     <ClCompile Include="Utility\StbImage.cpp">
       <Filter>Utility\Source</Filter>
     </ClCompile>
@@ -254,6 +266,12 @@
       <Filter>Shader</Filter>
     </None>
     <None Include="Shader\Standard_vertex.glsl">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="Shader\Sprite_fragment.glsl">
+      <Filter>Shader</Filter>
+    </None>
+    <None Include="Shader\Sprite_vertex.glsl">
       <Filter>Shader</Filter>
     </None>
     <None Include="Shader\LocalPosColor_fragment.glsl">

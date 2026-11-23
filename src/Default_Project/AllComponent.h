@@ -12,3 +12,4 @@
 #include "SceneCamera.h"
 #include "ViewTransition.h"
 #include "PlayerController.h"
+#include "SpriteRenderer.h"

@@ -30,6 +30,7 @@
     <ClInclude Include="Component\RigidBody.h" />
     <ClInclude Include="Component\SphereCollider.h" />
     <ClInclude Include="Component\Spline.h" />
+    <ClInclude Include="Component\SpriteRenderer.h" />
     <ClInclude Include="Component\Transform.h" />
     <ClInclude Include="Data_Structure\AppContext.h" />
     <ClInclude Include="Data_Structure\Collider.h" />
@@ -42,6 +43,7 @@
     <ClInclude Include="Data_Structure\Object.h" />
     <ClInclude Include="Data_Structure\Scene.h" />
     <ClInclude Include="Data_Structure\ScreenSize.h" />
+    <ClInclude Include="Data_Structure\Texture.h" />
     <ClInclude Include="Data_Structure\Vertex.h" />
     <ClInclude Include="Default_Scene.h" />
     <ClInclude Include="Game_Scene.h" />
@@ -65,11 +67,13 @@
     <ClCompile Include="Component\RigidBody.cpp" />
     <ClCompile Include="Component\SphereCollider.cpp" />
     <ClCompile Include="Component\Spline.cpp" />
+    <ClCompile Include="Component\SpriteRenderer.cpp" />
     <ClCompile Include="Component\Transform.cpp" />
     <ClCompile Include="Data_Structure\Material.cpp" />
     <ClCompile Include="Data_Structure\Mesh.cpp" />
     <ClCompile Include="Data_Structure\Object.cpp" />
     <ClCompile Include="Data_Structure\Scene.cpp" />
+    <ClCompile Include="Data_Structure\Texture.cpp" />
     <ClCompile Include="Default_Scene.cpp" />
     <ClCompile Include="Game_Scene.cpp" />
     <ClCompile Include="main.cpp" />
@@ -93,6 +97,8 @@
     <None Include="Shader\LocalPosColor_vertex.glsl" />
     <None Include="Shader\Spline_fragment.glsl" />
     <None Include="Shader\Spline_vertex.glsl" />
+    <None Include="Shader\Sprite_fragment.glsl" />
+    <None Include="Shader\Sprite_vertex.glsl" />
     <None Include="Shader\Standard_fragment.glsl" />
     <None Include="Shader\Standard_vertex.glsl" />
   </ItemGroup>

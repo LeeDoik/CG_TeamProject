@@ -82,6 +82,11 @@ int main(int argc, char** argv) {
 	make_fragmentShaders(fragmentShaders, "LocalPosColor_fragment.glsl");
 	make_shaderProgram("LocalPosColor", shaders, vertexShaders["LocalPosColor_vertex.glsl"], fragmentShaders["LocalPosColor_fragment.glsl"]);
 
+	//[Sprite] 종이 스프라이트(텍스처 사각형)용. SpriteRenderer가 쓴다
+	make_vertexShaders(vertexShaders, "Sprite_vertex.glsl");
+	make_fragmentShaders(fragmentShaders, "Sprite_fragment.glsl");
+	make_shaderProgram("Sprite", shaders, vertexShaders["Sprite_vertex.glsl"], fragmentShaders["Sprite_fragment.glsl"]);
+
 	//////////////////Mesh, Material 캐시 초기화//////////////////
 
 	meshChache["Cube"] = new Mesh("Default_Cube.obj");
@@ -343,6 +348,12 @@ void DrawScene(GLFWwindow* window)
 			}
 			return false;
 		});
+
+	//[Sprite] 반투명 종이 스프라이트(SpriteRenderer)는 불투명 물체를 다 그린 뒤에 그린다.
+	//먼저 그리면 가장자리 반투명 픽셀이 깊이를 써서 나중에 그리는 뒤쪽 물체가 그 자리에 안 그려진다.
+	//각 묶음 안에서는 위의 Z 순서를 그대로 유지한다.
+	stable_partition(renderQueue.begin(), renderQueue.end(),
+		[](Object* obj) { return obj->GetComponent<SpriteRenderer>() == nullptr; });
 
 	//각 카메라 시점별 렌더링
 	for (Camera* cam : activeCameras) {
