@@ -150,6 +150,9 @@
     <ClInclude Include="Script\CoreRules.h">
       <Filter>Script</Filter>
     </ClInclude>
+    <ClInclude Include="Script\DimensionSwitch.h">
+      <Filter>Script</Filter>
+    </ClInclude>
     <ClInclude Include="Script\PlayerController.h">
       <Filter>Script</Filter>
     </ClInclude>
@@ -240,6 +243,9 @@
       <Filter>리소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Script\CoreRules.cpp">
+      <Filter>Script</Filter>
+    </ClCompile>
+    <ClCompile Include="Script\DimensionSwitch.cpp">
       <Filter>Script</Filter>
     </ClCompile>
     <ClCompile Include="Script\PlayerController.cpp">

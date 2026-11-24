@@ -349,7 +349,7 @@ void LevelLoader::Build(AppContext& ctx, const LevelData& level) {
 	}
 
 	// 체크포인트: 가는 초록 기둥
-	// [연결 지점] 닿으면 위치 저장 (기획서 4.4)
+	// [연결 지점] 닿으면 위치 저장 (기획서 4.4). 게이지 0 + 2D 복귀 불가일 때 돌아갈 곳(DimensionSwitch::GetRespawnPoint)도 이 위치로
 	for (const LevelPoint& c : level.checkpoints) {
 		CreateBox(ctx, "checkpoint:" + to_string(c.line), c.position, vec3(0.15f, 1.0f, 0.15f), materialChache["Green"]);
 	}
