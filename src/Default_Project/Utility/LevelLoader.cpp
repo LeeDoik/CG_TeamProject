@@ -327,7 +327,7 @@ void LevelLoader::Build(AppContext& ctx, const LevelData& level) {
 		obj->AddComponent<BoxCollider>();
 	}
 
-	// 움직이는 발판: 고정 발판 + MovingPlatform(이동만). 위에 탄 플레이어를 옮기는 규칙은 없다(기획서 4.3)
+	// 움직이는 발판: 고정 발판 + MovingPlatform(이동만). 위에 탄 플레이어도 같이 옮긴다(PlayerController::RideAlong, 기획서 4.3)
 	for (const LevelMover& m : level.movers) {
 		Object* obj = CreateBox(ctx, "mover:" + to_string(m.line), m.center, m.size, FindMaterial(m.material, level, m.line));
 		obj->AddComponent<BoxCollider>();
