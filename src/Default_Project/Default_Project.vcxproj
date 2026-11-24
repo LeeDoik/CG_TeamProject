@@ -50,11 +50,13 @@
     <ClInclude Include="Script\SceneCamera.h" />
     <ClInclude Include="Script\TestScript.h" />
     <ClInclude Include="Script\CoreRules.h" />
+    <ClInclude Include="Script\MovingPlatform.h" />
     <ClInclude Include="Script\PlayerController.h" />
     <ClInclude Include="Script\PlayerSpriteAnimator.h" />
     <ClInclude Include="Script\ViewTransition.h" />
     <ClInclude Include="Utility\ColliderManager.h" />
     <ClInclude Include="Utility\InputManager.h" />
+    <ClInclude Include="Utility\LevelLoader.h" />
     <ClInclude Include="Utility\ObjImporter.h" />
     <ClInclude Include="Utility\SceneLoader.h" />
     <ClInclude Include="Utility\ShaderManager.h" />
@@ -81,10 +83,12 @@
     <ClCompile Include="Script\SceneCamera.cpp" />
     <ClCompile Include="Script\TestScript.cpp" />
     <ClCompile Include="Script\CoreRules.cpp" />
+    <ClCompile Include="Script\MovingPlatform.cpp" />
     <ClCompile Include="Script\PlayerController.cpp" />
     <ClCompile Include="Script\PlayerSpriteAnimator.cpp" />
     <ClCompile Include="Script\ViewTransition.cpp" />
     <ClCompile Include="Utility\ColliderManager.cpp" />
+    <ClCompile Include="Utility\LevelLoader.cpp" />
     <ClCompile Include="Utility\ObjImporter.cpp" />
     <ClCompile Include="Utility\SceneLoader.cpp" />
     <ClCompile Include="Utility\StbImage.cpp" />
@@ -93,6 +97,7 @@
   <ItemGroup>
     <None Include="Default_Scene.json" />
     <None Include="Game_Scene.json" />
+    <None Include="Levels\test.txt" />
     <None Include="Shader\Debug_fragment.glsl" />
     <None Include="Shader\Debug_vertex.glsl" />
     <None Include="Shader\LocalPosColor_fragment.glsl" />
