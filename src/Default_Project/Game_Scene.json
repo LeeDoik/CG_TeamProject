@@ -67,10 +67,6 @@
           "properties": { "view": "MainCamera" }
         },
         {
-          "type": "RigidBody",
-          "properties": { "mass": 1.0, "useGravity": false }
-        },
-        {
           "type": "SpriteRenderer",
           "properties": { "alphaCutoff": 0.1, "billboardY": false }
         },

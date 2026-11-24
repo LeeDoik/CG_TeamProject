@@ -6,7 +6,6 @@ using namespace std;
 class Texture;
 class SpriteRenderer;
 class PlayerController;
-class RigidBody;
 class BoxCollider;
 class ViewTransition;
 
@@ -23,9 +22,9 @@ enum class PlayerSpriteState {
 //  - 가만히: idle / 걷기: walk 4장을 8fps로 반복 / 공중: 올라가면 jump_rise, 내려가면 jump_fall
 //  - 왼쪽으로 움직이면 좌우 반전(SpriteRenderer::flipX), 멈추면 마지막 방향을 유지한다
 //  - manifest.json의 공통 pivot을 발 기준점으로 쓰고, 그림 크기는 충돌 상자 높이에 맞춘다
-//  - 이동·충돌은 건드리지 않고 PlayerController·RigidBody 값을 읽기만 한다
-//  - 같은 오브젝트에 SpriteRenderer, PlayerController, RigidBody가 있어야 하고,
-//    JSON에서 PlayerController·RigidBody보다 뒤에 붙여야 같은 프레임의 속도를 읽는다
+//  - 이동·충돌은 건드리지 않고 PlayerController 값(속도, 땅 위인지)을 읽기만 한다
+//  - 같은 오브젝트에 SpriteRenderer, PlayerController가 있어야 하고,
+//    JSON에서 PlayerController보다 뒤에 붙여야 같은 프레임의 속도를 읽는다
 class PlayerSpriteAnimator : public Component {
 public:
 	string folder = "Assets/Characters/PaperChild/";	// 그림과 manifest.json이 있는 폴더 (실행 폴더 기준)
@@ -52,7 +51,6 @@ public:
 private:
 	SpriteRenderer* sprite = nullptr;
 	PlayerController* controller = nullptr;
-	RigidBody* rb = nullptr;
 	BoxCollider* box = nullptr;
 	ViewTransition* view = nullptr;
 
