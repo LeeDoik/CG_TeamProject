@@ -6,7 +6,7 @@ using namespace glm;
 
 class BoxCollider : public Collider {
 private:
-	Transform* tr;
+	Transform* tr = nullptr;	// Start 전에 Transform을 옮겨도 RecalculateCollision이 쓰레기 포인터를 쓰지 않게
 
 public:
 	vec3 center;
