@@ -19,8 +19,8 @@
     187.54696132596686,
     483.7900552486188
   ],
-  "generated_images": 0,
-  "resized_images": 9,
+  "generated_images": 4,
+  "resized_images": 5,
   "frames": [
     {
       "file": "paper_child_clear_right.png",
@@ -120,78 +120,106 @@
     {
       "file": "paper_child_walk_01_right.png",
       "source_size": [
-        1086,
-        1448
+        2172,
+        724
       ],
       "output_size": [
         384,
         512
       ],
-      "source_sha256": "0af7ec1811f9533bd50f8fefec13229d8524699bad8c1c7920fea359c23ba3ae",
-      "output_sha256": "0e732559a80bc6826c835f6ea391a4d398e3cab1498b14c1e65723f4a89d480e",
+      "source_sha256": "10b2b64db7b7866cc21f303601a2a982c595e842f3f47158f1ebc0bc2e4260d3",
+      "output_sha256": "9972e161fcf7182b8a390461d33dbf623e4e26f6fa088c9a927cea52b97cd23d",
       "alpha_bbox": [
-        34,
-        21,
-        293,
-        487
-      ]
+        32,
+        19,
+        288,
+        485
+      ],
+      "source_cell": [
+        0,
+        0,
+        543,
+        724
+      ],
+      "provenance": "AI-generated walk cycle, cell extraction and premultiplied-alpha Lanczos alignment"
     },
     {
       "file": "paper_child_walk_02_right.png",
       "source_size": [
-        1086,
-        1448
+        2172,
+        724
       ],
       "output_size": [
         384,
         512
       ],
-      "source_sha256": "67a9c36cd25fb1afd3aab6afd4f408027121c9ed36940424f5dcedd1645e08d4",
-      "output_sha256": "378062c0d1f219b7fa28429008b77eaeaa8287269b87e2986bf1ac02d34f3440",
+      "source_sha256": "10b2b64db7b7866cc21f303601a2a982c595e842f3f47158f1ebc0bc2e4260d3",
+      "output_sha256": "c9cf6cf5f04d329787bac3320228678464ef9d4e8d070dd2096d71d08e23da5c",
       "alpha_bbox": [
-        34,
-        21,
-        301,
+        32,
+        19,
+        281,
         487
-      ]
+      ],
+      "source_cell": [
+        543,
+        0,
+        1086,
+        724
+      ],
+      "provenance": "AI-generated walk cycle, cell extraction and premultiplied-alpha Lanczos alignment"
     },
     {
       "file": "paper_child_walk_03_right.png",
       "source_size": [
-        1086,
-        1448
+        2172,
+        724
       ],
       "output_size": [
         384,
         512
       ],
-      "source_sha256": "9802d8b6bad13fcde2a94cffc7be16f9e9b2f1d2bc1c864bfc59befbce4ae8d7",
-      "output_sha256": "b5a416541cf8b0c5e30effbce07d4f3865c31b931658b8e47018bccfa6f8f6bf",
+      "source_sha256": "10b2b64db7b7866cc21f303601a2a982c595e842f3f47158f1ebc0bc2e4260d3",
+      "output_sha256": "faef90fac2fc93049503462623019f5d96a9f4d62dd887c3f9e60474d46883e3",
       "alpha_bbox": [
-        34,
-        21,
-        322,
-        487
-      ]
+        32,
+        19,
+        305,
+        486
+      ],
+      "source_cell": [
+        1086,
+        0,
+        1629,
+        724
+      ],
+      "provenance": "AI-generated walk cycle, cell extraction and premultiplied-alpha Lanczos alignment"
     },
     {
       "file": "paper_child_walk_04_right.png",
       "source_size": [
-        1086,
-        1448
+        2172,
+        724
       ],
       "output_size": [
         384,
         512
       ],
-      "source_sha256": "e8a4d966421e768a672718e78652f53aaca4ad6d4baf35bbd0471b323c54ce65",
-      "output_sha256": "da800c180e58b896930e71dbd84ca5368bcc962b94986408a6db5814a824c5ee",
+      "source_sha256": "10b2b64db7b7866cc21f303601a2a982c595e842f3f47158f1ebc0bc2e4260d3",
+      "output_sha256": "849c35c4d6d3ca1c47214e644efcb74239ad1e8c67d8ae0355f2d0dfc1e04bf5",
       "alpha_bbox": [
-        34,
-        21,
-        296,
-        487
-      ]
+        32,
+        19,
+        283,
+        486
+      ],
+      "source_cell": [
+        1629,
+        0,
+        2172,
+        724
+      ],
+      "provenance": "AI-generated walk cycle, cell extraction and premultiplied-alpha Lanczos alignment"
     }
   ]
 }
