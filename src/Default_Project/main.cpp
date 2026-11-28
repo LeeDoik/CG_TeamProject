@@ -128,6 +128,20 @@ int main(int argc, char** argv) {
 	materialChache["Orange"] = orange;
 	materialChache["Purple"] = purple;
 
+	//[Level] 기획서 5.3의 레벨 재질 (레벨 파일 block·mover의 재질 이름). 그림이 정해질 때까지 쓰는 임시 색
+	Material* paper = new Material(shaders["Standard"]);
+	paper->SetVec4("tColor", vec4(0.80f, 0.72f, 0.56f, 1.0f));		//종이 발판(기본 재질)
+	Material* card = new Material(shaders["Standard"]);
+	card->SetVec4("tColor", vec4(0.74f, 0.57f, 0.38f, 1.0f));		//골판지 기둥·발판(밝음)
+	Material* cardDark = new Material(shaders["Standard"]);
+	cardDark->SetVec4("tColor", vec4(0.50f, 0.36f, 0.23f, 1.0f));	//골판지(어두움). 밝기로 깊이를 구분
+	Material* wall = new Material(shaders["Standard"]);
+	wall->SetVec4("tColor", vec4(0.47f, 0.55f, 0.62f, 1.0f));		//벽지 무늬 벽
+	materialChache["Paper"] = paper;
+	materialChache["Card"] = card;
+	materialChache["CardDark"] = cardDark;
+	materialChache["Wall"] = wall;
+
 	//////////////////사용자 정의 초기화////////////////////
 
 	//외부 입력 콜백 함수 설정

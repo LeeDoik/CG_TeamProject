@@ -1,10 +1,14 @@
 ﻿#pragma once
 #include "Scene.h"
 
-// 팝업북 게임 씬 (1단계: 플레이어 이동·점프, E로 2D/3D 전환 시험용 지형)
-// 씬 내용은 Game_Scene.json에 있다. 엔진 기본 씬(Default_Scene)은 그대로 둔다.
+// 팝업북 게임 씬
+// 카메라·조명·플레이어는 Game_Scene.json, 지형·적·장치는 레벨 파일(Levels/*.txt, 기획서 6.7)에서 만든다.
+// 엔진 기본 씬(Default_Scene)은 그대로 둔다.
 class Game_Scene : public Scene {
 public:
+	// 처음에 불러올 레벨. 다른 레벨을 보려면 이 줄만 바꾼다. 비워 두면 JSON만 불러온다
+	string levelFile = "Levels/test.txt";
+
 	Game_Scene(ScreenSize screenSize);
 
 	void LoadScene(AppContext& ctx) override;

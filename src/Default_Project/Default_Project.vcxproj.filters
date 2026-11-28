@@ -165,6 +165,12 @@
     <ClInclude Include="Script\ViewTransition.h">
       <Filter>Script</Filter>
     </ClInclude>
+    <ClInclude Include="Script\MovingPlatform.h">
+      <Filter>Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility\LevelLoader.h">
+      <Filter>Utility\Header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Component\MeshRenderer3D.cpp">
@@ -254,6 +260,12 @@
     <ClCompile Include="Script\ViewTransition.cpp">
       <Filter>Script</Filter>
     </ClCompile>
+    <ClCompile Include="Script\MovingPlatform.cpp">
+      <Filter>Script</Filter>
+    </ClCompile>
+    <ClCompile Include="Utility\LevelLoader.cpp">
+      <Filter>Utility\Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shader\Debug_fragment.glsl">
@@ -290,6 +302,9 @@
       <Filter>리소스 파일</Filter>
     </None>
     <None Include="Game_Scene.json">
+      <Filter>리소스 파일</Filter>
+    </None>
+    <None Include="Levels\test.txt">
       <Filter>리소스 파일</Filter>
     </None>
   </ItemGroup>
