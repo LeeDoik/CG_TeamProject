@@ -49,11 +49,13 @@
     <ClInclude Include="Game_Scene.h" />
     <ClInclude Include="Script\SceneCamera.h" />
     <ClInclude Include="Script\TestScript.h" />
+    <ClInclude Include="Script\BookWorm.h" />
     <ClInclude Include="Script\Checkpoint.h" />
     <ClInclude Include="Script\CoreRules.h" />
     <ClInclude Include="Script\DimensionSwitch.h" />
     <ClInclude Include="Script\MovingPlatform.h" />
     <ClInclude Include="Script\PlayerController.h" />
+    <ClInclude Include="Script\Spike.h" />
     <ClInclude Include="Script\PlayerHealth.h" />
     <ClInclude Include="Script\PlayerSpriteAnimator.h" />
     <ClInclude Include="Script\PageFragment.h" />
@@ -87,6 +89,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Script\SceneCamera.cpp" />
     <ClCompile Include="Script\TestScript.cpp" />
+    <ClCompile Include="Script\BookWorm.cpp" />
     <ClCompile Include="Script\Checkpoint.cpp" />
     <ClCompile Include="Script\CoreRules.cpp" />
     <ClCompile Include="Script\DimensionSwitch.cpp" />

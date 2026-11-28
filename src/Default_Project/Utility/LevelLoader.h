@@ -14,8 +14,9 @@ using namespace glm;
 //  파일 형식은 기획서 6.7을 그대로 따른다. 파서 코드는 AI가 작성을 도왔다(docs/AI_활용_기록.md).
 //
 //  여기서 하지 않는 것: 충돌 규칙, 2D/3D 전환 조건, 3D 게이지,
-//  가시·책벌레·등불·힌트의 동작. 담당자가 LevelLoader.cpp의 [연결 지점] 주석 자리에 붙인다.
+//  등불·힌트의 동작. 담당자가 LevelLoader.cpp의 [연결 지점] 주석 자리에 붙인다.
 //  체크포인트는 깃발에 트리거 충돌 상자와 Checkpoint 컴포넌트만 붙이고, 저장과 낙사(killY)는 PlayerHealth가 한다.
+//  가시는 트리거 충돌 상자와 Spike 표시, 책벌레는 트리거 충돌 상자와 BookWorm(왕복)을 붙이고, 닿음 판정은 PlayerHealth가 한다.
 //  조각도 트리거 충돌 상자와 PageFragment 표시만 붙이고, 획득·스테이지 클리어·다음 레벨(next)은 StageFlow가 한다.
 //
 //  새 오브젝트는 ctx.pendingHierarchy에 넣는다(엔진 Object::Instantiate와 같은 방식, 엔진이 프레임 끝에 Hierarchy로 옮긴다).
