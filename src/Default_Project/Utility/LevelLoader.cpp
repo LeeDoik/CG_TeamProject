@@ -14,6 +14,8 @@
 #include "PlayerController.h"
 #include "MovingPlatform.h"
 #include "Checkpoint.h"
+#include "Spike.h"
+#include "BookWorm.h"
 #include <fstream>
 #include <sstream>
 #include <charconv>
@@ -341,18 +343,23 @@ void LevelLoader::Build(AppContext& ctx, const LevelData& level) {
 		obj->AddComponent<MovingPlatform>(m.center, m.amplitude, m.period);
 	}
 
-	// ---- 아래는 임시 모양이다. 플레이어를 막는 충돌체가 없어서 플레이어가 그대로 지나간다 ----
+	// ---- 아래는 임시 모양이다. 모두 플레이어를 막지 않는다(막는 충돌체가 없거나 트리거) ----
 
-	// 가시: 빨간 상자. 적힌 재질은 LevelData에만 남긴다
-	// [연결 지점] 닿으면 HP -1, 마지막 체크포인트로 (기획서 4.4). PlayerHealth::TakeDamage(true)를 부르면 된다
+	// 가시: 빨간 상자 + 트리거 충돌 상자 + Spike 표시. 적힌 재질은 LevelData에만 남긴다
+	//  트리거라서 플레이어를 막지 않는다(PlayerController::GetSolids가 뺀다). 상자는 닿음 판정에 쓸 범위(minPos/maxPos)만 준다.
+	//  닿으면 PlayerHealth가 HP -1, 마지막 체크포인트로 보낸다(기획서 4.4)
 	for (const LevelBox& s : level.spikes) {
-		CreateBox(ctx, "spike:" + to_string(s.line), s.center, s.size, materialChache["Red"]);
+		Object* obj = CreateBox(ctx, "spike:" + to_string(s.line), s.center, s.size, materialChache["Red"]);
+		obj->AddComponent<BoxCollider>()->isTrigger = true;
+		obj->AddComponent<Spike>();
 	}
 
-	// 책벌레: 납작한 보라 상자
-	// [연결 지점] x ± range를 speed로 왕복, 위에서 밟으면 처치, 그 밖의 접촉은 피해 (기획서 5.2)
+	// 책벌레: 납작한 보라 상자 + 트리거 충돌 상자 + BookWorm(x ± range를 speed로 왕복, 기획서 5.2)
+	//  밟기·피해 판정은 PlayerHealth가 한다(기획서 4.4). 그림은 나중에 이미지 작업으로 바꾼다
 	for (const LevelWorm& w : level.worms) {
-		CreateOnFloor(ctx, "worm:" + to_string(w.line), w.position, vec3(0.6f, 0.4f, 0.4f), materialChache["Purple"]);
+		Object* obj = CreateOnFloor(ctx, "worm:" + to_string(w.line), w.position, vec3(0.6f, 0.4f, 0.4f), materialChache["Purple"]);
+		obj->AddComponent<BoxCollider>()->isTrigger = true;
+		obj->AddComponent<BookWorm>(w.range, w.speed);
 	}
 
 	// 체크포인트: 가는 초록 기둥 (기획서 4.4)
