@@ -40,6 +40,9 @@ public:
 	void Start() override;
 	void Update(float deltaTime) override;
 
+	// ---- 다른 스크립트가 부르는 함수 ----
+	void RefillGauge() { gauge = 1.0f; }	// 게이지를 가득 채운다 (체크포인트로 돌아갈 때 PlayerHealth가 부른다)
+
 	// ---- UI·소리가 읽는 값 ----
 	float GetGauge() const { return gauge; }							// 3D 게이지 0~1
 	bool IsGaugeWarning() const;	// 3D에 있고 게이지 20% 이하 → 게이지 막대 깜빡임 (2D에서 충전 중일 때는 끈다)

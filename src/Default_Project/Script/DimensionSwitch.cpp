@@ -97,7 +97,7 @@ void DimensionSwitch::TryReturnTo2D() {
 // 게이지가 0이 되었을 때 (기획서 4.2)
 void DimensionSwitch::ForceReturnTo2D() {
 	// 2D로 돌아갈 수 없는 자리(겹침)라면 HP를 깎지 않고 마지막 체크포인트로 보낸다(기획서 4.4).
-	// 위치 옮기기와 2D 전환은 PlayerHealth::ReturnToCheckpoint가 한다(구덩이에 떨어졌을 때와 같은 함수).
+	// 위치 옮기기, 2D 전환, 게이지 채우기는 PlayerHealth::ReturnToCheckpoint가 한다(구덩이에 떨어졌을 때와 같은 함수).
 	if (health && player->OverlapsAny2D()) {
 		cout << "[게이지] 0%인데 2D로 돌아갈 수 없는 자리라서 마지막 체크포인트로 보냅니다 (HP 그대로)" << endl;
 		health->ReturnToCheckpoint();

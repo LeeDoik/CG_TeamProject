@@ -356,7 +356,7 @@ void LevelLoader::Build(AppContext& ctx, const LevelData& level) {
 	}
 
 	// 체크포인트: 가는 초록 기둥 (기획서 4.4)
-	//  닿았는지 볼 수 있게 트리거 충돌 상자를 붙인다. 트리거는 겹침만 알려 주고 막지 않는다(PlayerController::GetSolids가 뺀다).
+	//  닿음 판정에 쓸 범위(minPos/maxPos)를 주려고 트리거 충돌 상자를 붙인다. 트리거라서 플레이어를 막지 않는다(PlayerController::GetSolids가 뺀다).
 	//  닿으면 PlayerHealth가 위치를 저장하고 Checkpoint가 색을 바꾼다
 	for (const LevelPoint& c : level.checkpoints) {
 		Object* obj = CreateOnFloor(ctx, "checkpoint:" + to_string(c.line), c.position, vec3(0.15f, 1.0f, 0.15f), materialChache["Green"]);
