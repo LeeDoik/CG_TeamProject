@@ -17,6 +17,10 @@ using namespace glm;
 //  가시·책벌레·조각·등불·힌트의 동작. 담당자가 LevelLoader.cpp의 [연결 지점] 주석 자리에 붙인다.
 //  체크포인트는 깃발에 트리거 충돌 상자와 Checkpoint 컴포넌트만 붙이고, 저장과 낙사(killY)는 PlayerHealth가 한다.
 //
+//  새 오브젝트는 ctx.pendingHierarchy에 넣는다(엔진 Object::Instantiate와 같은 방식, 엔진이 프레임 끝에 Hierarchy로 옮긴다).
+//  게임 도중 다음 레벨을 불러올 때는 main 루프가 Hierarchy를 도는 중이라, Hierarchy에 바로 넣으면
+//  vector가 다시 잡혀 루프가 망가지기 때문이다. 게임 루프 전에 처음 불러올 때는 Game_Scene이 바로 Hierarchy로 옮긴다.
+//
 //  형식 규칙 (기획서 6.7에 없던 부분은 팀에서 확정, PR #4)
 //   - 한 줄에 객체 하나. 첫 단어가 키워드(대소문자 구분), 값은 공백·탭으로 나눈다
 //   - 빈 줄과 #으로 시작하는 줄은 건너뛴다. 줄 중간의 #은 주석이 아니다
@@ -104,6 +108,7 @@ struct LevelData {
 class LevelInfo : public Component {
 public:
 	LevelData data;
+	vector<Object*> objects;	// 이 레벨 파일로 만든 오브젝트 전부("Level" 자신 포함). 다음 레벨로 갈 때 이것만 지운다
 };
 
 class LevelLoader {

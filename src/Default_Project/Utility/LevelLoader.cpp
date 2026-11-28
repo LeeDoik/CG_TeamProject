@@ -215,10 +215,11 @@ namespace {
 
 	// ---------------- 장면 만들기 ----------------
 
-	// 장면에 빈 오브젝트를 하나 만든다 (SceneLoader::Instantiate와 같다)
+	// 장면에 빈 오브젝트를 하나 만든다.
+	// Hierarchy가 아니라 pendingHierarchy에 넣는다. 이유는 LevelLoader.h 맨 위 설명(게임 도중 다음 레벨 불러오기)
 	Object* NewObject(AppContext& ctx, const string& name) {
-		ctx.Hierarchy.push_back(make_unique<Object>(ctx, name));
-		return ctx.Hierarchy.back().get();
+		ctx.pendingHierarchy.push_back(make_unique<Object>(ctx, name));
+		return ctx.pendingHierarchy.back().get();
 	}
 
 	// 중심 center, 크기 size인 큐브. Default_Cube.obj는 -1~1(한 변 2칸)이라 scale = size / 메시 크기.
@@ -328,6 +329,8 @@ bool LevelLoader::Parse(const string& file, LevelData& level) {
 }
 
 void LevelLoader::Build(AppContext& ctx, const LevelData& level) {
+	size_t firstNew = ctx.pendingHierarchy.size();	// 이번 Build가 만드는 오브젝트는 pendingHierarchy의 이 자리부터 쌓인다
+
 	// 고정 발판·벽: 큐브 + BoxCollider. Game_Scene.json의 Ground와 같은 구성이라 충돌은 엔진 그대로다
 	for (const LevelBox& b : level.blocks) {
 		Object* obj = CreateBox(ctx, "block:" + to_string(b.line), b.center, b.size, FindMaterial(b.material, level, b.line));
@@ -384,5 +387,10 @@ void LevelLoader::Build(AppContext& ctx, const LevelData& level) {
 	else cout << "[레벨] 경고: " << level.file << "에 start가 없어 플레이어를 Game_Scene.json 위치에 둡니다" << endl;
 
 	Object* levelObj = NewObject(ctx, "Level");
-	levelObj->AddComponent<LevelInfo>()->data = level;
+	LevelInfo* info = levelObj->AddComponent<LevelInfo>();
+	info->data = level;
+
+	// 이번 Build가 만든 오브젝트를 적어 둔다. NewObject가 pendingHierarchy 끝에 차례로 넣었으므로 firstNew부터 끝까지가 모두 이번 것이다.
+	// 다음 레벨로 갈 때 이 목록만 지우고 카메라·조명·플레이어는 남긴다.
+	for (size_t i = firstNew; i < ctx.pendingHierarchy.size(); ++i) info->objects.push_back(ctx.pendingHierarchy[i].get());
 }
