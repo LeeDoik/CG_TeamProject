@@ -48,7 +48,8 @@ void DimensionSwitch::Update(float deltaTime) {
 	}
 
 	// 3. E: 지금 모드의 반대쪽으로 전환을 시도한다
-	if (gameObject->ctx.inputManager.GetKeyDown(GLFW_KEY_E)) {
+	//    책벌레에 맞아 넉백 중(0.25초 조작 불가, 기획서 4.4)이면 E도 받지 않는다
+	if (!player->IsControlLocked() && gameObject->ctx.inputManager.GetKeyDown(GLFW_KEY_E)) {
 		if (in3D) TryReturnTo2D();
 		else TryEnter3D();
 	}

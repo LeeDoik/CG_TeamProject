@@ -43,6 +43,12 @@ public:
 	float depth2D = 100.0f;			// 2D에서 늘린 충돌 상자의 깊이(칸). 레벨 깊이(기획서 스테이지는 z -8 ~ 4 정도)보다 충분히 크면 된다.
 									// 수천 칸처럼 너무 크게 하면 CheckBoxBox의 EPSILON 오차가 skin보다 커져 바닥에 걸린다
 
+	// 책벌레 수치 (기획서 4.4, 5.2)
+	float stompBounceSpeed = 8.0f;	// 책벌레를 밟았을 때 위로 튀어 오르는 속도 (기획서 5.2 "초속 8")
+	float knockbackSpeedX = 5.0f;	// 책벌레에 맞았을 때 반대쪽으로 튕기는 속도. 기획서에 없어서 좌우 이동 속도와 같게 정함
+	float knockbackSpeedY = 6.0f;	// 그때 위로 튕기는 속도. 약 0.6칸 뜬다 (점프 11의 반쯤)
+	float knockbackLockTime = 0.25f;	// 넉백 뒤 조작 불가 시간(초, 기획서 4.4)
+
 	void Start() override;
 	void Update(float deltaTime) override;
 
@@ -56,6 +62,12 @@ public:
 	void SetDepth(float z);					// 깊이(z)만 옮긴다 (2D → 3D 깊이 맞추기)
 	void RideAlong(vec3 delta, BoxCollider* platform);	// 서 있는 발판이 delta만큼 움직였을 때 같이 움직인다 (MovingPlatform이 부른다)
 	void Respawn(vec3 footPosition);		// 발이 footPosition에 오게 옮기고 속도·발판 기억을 지운다
+
+	// ---- 책벌레 (PlayerHealth가 부른다, 기획서 4.4) ----
+	void StompBounce();						// 책벌레를 밟았다: 위로 튀어 오른다
+	void Knockback(float dirX);				// 책벌레에 맞았다: dirX 쪽(+1 오른쪽, -1 왼쪽) 위로 튕기고 0.25초 동안 키를 받지 않는다
+	bool IsControlLocked() const { return controlLockTimer > 0.0f; }	// 넉백 중이라 조작 불가인지 (DimensionSwitch, PlayerSpriteAnimator가 읽는다)
+	float GetFootYBeforeMove() const { return footYBeforeMove; }		// 이번 프레임에 움직이기 전의 발 높이 (밟기 판정)
 
 	static Component* CreateFromJson(Object* obj, const json& props, const map<string, Object*>& spawnedObjects);
 
@@ -72,6 +84,8 @@ private:
 
 	float jumpBufferTimer = 0.0f;	// 0보다 크면 점프 입력이 남아 있음
 	float coyoteTimer = 0.0f;		// 0보다 크면 공중이어도 점프 가능
+	float controlLockTimer = 0.0f;	// 0보다 크면 넉백 중이라 키를 받지 않는다
+	float footYBeforeMove = 0.0f;	// 이번 프레임에 움직이기 전의 발 높이
 
 	bool depthIgnored = false;		// 지금 충돌 상자가 z로 늘어나 있는지 (2D)
 	float baseSizeZ = 1.0f;			// 원래 BoxCollider::size.z

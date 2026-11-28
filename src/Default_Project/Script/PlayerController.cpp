@@ -54,6 +54,9 @@ void PlayerController::Update(float deltaTime) {
 	// 0. 시점 전환 0.5초 동안은 게임이 멈춘다(기획서 4.1). 속도는 그대로 두었다가 전환이 끝나면 이어서 쓴다.
 	if (view && view->IsTransitioning()) return;
 
+	// 움직이기 전 발 높이를 적어 둔다. PlayerHealth가 "직전에 책벌레 윗면보다 위에 있었나"(밟기)를 볼 때 쓴다.
+	footYBeforeMove = GetFootPosition().y;
+
 	// 1. 충돌 규칙을 지금 모드에 맞춘다. 2D: 상자를 z로 늘려 깊이 무시 / 3D: 원래 크기로 x·y·z 비교
 	bool is3D = view && view->GetMode() == ViewMode::View3D;
 	SetDepthIgnored(!is3D);
@@ -143,6 +146,14 @@ bool PlayerController::StepUpOnto(BoxCollider* other) {
 void PlayerController::UpdateVelocity(float deltaTime, bool is3D) {
 	InputManager& input = gameObject->ctx.inputManager;
 	bool grounded = (ground != nullptr);
+
+	// 넉백 중(0.25초)에는 키를 받지 않는다(기획서 4.4 "0.25초 동안 조작 불가").
+	// 튕겨 나간 옆 속도는 그대로 두고 중력만 받는다. Space를 안 누르고 있어도 낮은 점프 중력(2배)은 쓰지 않는다.
+	if (controlLockTimer > 0.0f) {
+		controlLockTimer = std::max(0.0f, controlLockTimer - deltaTime);
+		velocity.y = std::max(velocity.y - gravity * deltaTime, -maxFallSpeed);
+		return;
+	}
 
 	// 좌우 이동 (화면 오른쪽 = +x)
 	float dx = 0.0f;
@@ -325,6 +336,26 @@ void PlayerController::Respawn(vec3 footPosition) {
 	ignored.clear();
 	jumpBufferTimer = 0.0f;
 	coyoteTimer = 0.0f;
+	controlLockTimer = 0.0f;		// 넉백 중에 체크포인트로 가도 바로 움직일 수 있게
+	footYBeforeMove = GetFootPosition().y;	// 옮긴 자리를 "움직이기 전"으로 본다. 옮기기 전 높이로 밟기를 잘못 판단하지 않게
+}
+
+// 책벌레를 밟았다 (기획서 5.2 "위에서 밟으면 처치되고 플레이어는 위로 튀어 오른다(초속 8)")
+//  점프처럼 위쪽 속도만 넣는다. 그 뒤는 점프와 같은 중력 규칙이라 Space를 누르고 있으면 약 1칸, 떼면 약 0.5칸 뜬다.
+//  발판 기억을 지워서 다음 프레임에 "서 있다"로 보고 속도를 0으로 만들지 않게 한다.
+void PlayerController::StompBounce() {
+	velocity.y = stompBounceSpeed;
+	ground = nullptr;
+}
+
+// 책벌레에 맞았다 (기획서 4.4 "반대쪽 위로 튕겨 나가고(0.25초 동안 조작 불가)")
+//  dirX(+1 또는 -1) 쪽으로 옆 속도, 위로 속도를 넣고 조작 불가 타이머를 건다. 깊이(z) 속도는 0으로 둔다.
+//  타이머가 도는 동안 UpdateVelocity가 키를 읽지 않으므로 이 속도가 그대로 쓰인다. 벽에 부딪히면 MoveAxis가 그 축 속도를 0으로 만든다.
+void PlayerController::Knockback(float dirX) {
+	velocity = vec3(dirX * knockbackSpeedX, knockbackSpeedY, 0.0f);
+	controlLockTimer = knockbackLockTime;
+	ground = nullptr;
+	jumpBufferTimer = 0.0f;
 }
 
 Component* PlayerController::CreateFromJson(Object* obj, const json& props, const map<string, Object*>& spawnedObjects) {
