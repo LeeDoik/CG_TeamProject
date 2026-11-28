@@ -25,7 +25,7 @@ extern map<string, Mesh*> meshChache;
 extern map<string, Material*> materialChache;
 
 namespace {
-	const char* kDefaultMaterial = "LightGray";	// 재질을 안 적었거나 엔진에 없는 이름일 때 (임시)
+	const char* kDefaultMaterial = "Paper";		// 재질을 안 적었거나 엔진에 없는 이름일 때. 기획서 5.3의 기본 고정 발판이 종이 발판이다
 	const size_t kAnyCount = SIZE_MAX;			// name, hint처럼 문장이라 단어 수가 정해지지 않은 경우
 
 	// ---------------- 글자 ----------------
@@ -235,6 +235,12 @@ namespace {
 		return obj;
 	}
 
+	// worm·checkpoint·fragment·lamp처럼 위치만 적는 줄은 y가 바닥(발) 기준이다(start와 같은 규칙).
+	// 상자 높이의 절반만큼 올려서 그 바닥 위에 서게 한다.
+	Object* CreateOnFloor(AppContext& ctx, const string& name, vec3 foot, vec3 size, Material* material) {
+		return CreateBox(ctx, name, foot + vec3(0.0f, 0.5f * size.y, 0.0f), size, material);
+	}
+
 	// 재질 이름으로 엔진 Material(main.cpp의 materialChache)을 찾는다.
 	// 안 적었으면 기본 재질, 엔진에 없는 이름이면 경고를 찍고 기본 재질을 쓴다(그 줄은 살린다).
 	Material* FindMaterial(const string& name, const LevelData& level, int line) {
@@ -307,7 +313,7 @@ bool LevelLoader::Parse(const string& file, LevelData& level) {
 		// 메모장에서 "UTF-8(BOM)"으로 저장하면 첫 줄 앞에 EF BB BF 3바이트가 붙는다
 		if (lineNo == 1 && raw.starts_with("\xEF\xBB\xBF")) raw.erase(0, 3);
 
-		// 빈 줄과 #으로 시작하는 줄은 건너뛴다 (기획서 6.7에 없는 규칙 → 담당자 확인 필요)
+		// 빈 줄과 #으로 시작하는 줄은 건너뛴다. 줄 중간의 #은 주석이 아니다 (형식 규칙)
 		string line = Trim(raw);
 		if (line.empty() || line[0] == '#') continue;
 
@@ -345,25 +351,25 @@ void LevelLoader::Build(AppContext& ctx, const LevelData& level) {
 	// 책벌레: 납작한 보라 상자
 	// [연결 지점] x ± range를 speed로 왕복, 위에서 밟으면 처치, 그 밖의 접촉은 피해 (기획서 5.2)
 	for (const LevelWorm& w : level.worms) {
-		CreateBox(ctx, "worm:" + to_string(w.line), w.position, vec3(0.6f, 0.4f, 0.4f), materialChache["Purple"]);
+		CreateOnFloor(ctx, "worm:" + to_string(w.line), w.position, vec3(0.6f, 0.4f, 0.4f), materialChache["Purple"]);
 	}
 
 	// 체크포인트: 가는 초록 기둥
 	// [연결 지점] 닿으면 위치 저장 (기획서 4.4). 게이지 0 + 2D 복귀 불가일 때 돌아갈 곳(DimensionSwitch::GetRespawnPoint)도 이 위치로
 	for (const LevelPoint& c : level.checkpoints) {
-		CreateBox(ctx, "checkpoint:" + to_string(c.line), c.position, vec3(0.15f, 1.0f, 0.15f), materialChache["Green"]);
+		CreateOnFloor(ctx, "checkpoint:" + to_string(c.line), c.position, vec3(0.15f, 1.0f, 0.15f), materialChache["Green"]);
 	}
 
 	// 페이지 조각: 작은 주황 상자
 	// [연결 지점] 얻으면 스테이지 클리어 (기획서 5.3)
 	for (const LevelPoint& f : level.fragments) {
-		CreateBox(ctx, "fragment:" + to_string(f.line), f.position, vec3(0.4f), materialChache["Orange"]);
+		CreateOnFloor(ctx, "fragment:" + to_string(f.line), f.position, vec3(0.4f), materialChache["Orange"]);
 	}
 
 	// 등불: 작은 노란 상자. 빛은 아직 내지 않는다
-	// [연결 지점] 점광원과 밝기 (기획서 5.3)
+	// [연결 지점] 점광원(Light, Point). 밝기는 Light::intensity 값으로 쓴다 (형식 규칙, 기획서 5.3)
 	for (const LevelLamp& l : level.lamps) {
-		CreateBox(ctx, "lamp:" + to_string(l.line), l.position, vec3(0.3f), materialChache["DarkYellow"]);
+		CreateOnFloor(ctx, "lamp:" + to_string(l.line), l.position, vec3(0.3f), materialChache["DarkYellow"]);
 	}
 
 	// hint, killY, theme, page, next, name, subtitle은 장면에 보이는 것이 없어 LevelInfo에만 둔다

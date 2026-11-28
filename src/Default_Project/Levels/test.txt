@@ -1,6 +1,6 @@
 # 레벨 로더 시험용 레벨. 기획서 6.7의 키워드를 모두 한 번 이상 쓴다.
-# 일부러 틀린 줄 3개(값 개수, 숫자 형식, 키워드 오타)와 엔진에 없는 재질 1개를 넣었다.
-# 지형은 1단계 시험 지형(전에 Game_Scene.json에 있던 바닥·계단·벽)을 그대로 옮겼다.
+# 일부러 틀린 줄 3개(값 개수, 숫자 형식, 키워드 오타)와 엔진에 없는 재질 이름 1개를 넣었다.
+# 지형은 1단계 시험 지형(전에 Game_Scene.json에 있던 바닥·계단·벽)을 옮기고 재질을 기획서 5.3 이름으로 바꿨다.
 
 name 테스트 스테이지
 subtitle TEST PAGE
@@ -12,31 +12,34 @@ killY -7
 # 시작 위치(발 기준). 바닥 윗면이 y = 0
 start 0 0 0
 
-# 고정 발판·벽: block x y z w h d [재질]
-block 6 -0.5 0 30 1 6 DarkGreen
-block -9.5 2 0 1 4 6 DarkGray
-block 4 0.5 0 2 1 2 LightGray
-block 7 1 0 2 2 2 LightGray
-block 11 1 -2.5 2 2 1 Blue
-block 16 2 1.5 1 4 3 DarkGray
+# 고정 발판·벽: block x y z w h d [재질]. x y z는 상자 중심
+block 6 -0.5 0 30 1 6 Paper
+block -9.5 2 0 1 4 6 Wall
+block 4 0.5 0 2 1 2 Card
+# 재질 이름 오타(Card → Crad): 경고가 나오고 기본 재질(Paper)로 그린다
+block 7 1 0 2 2 2 Crad
+block 11 1 -2.5 2 2 1 CardDark
+block 16 2 1.5 1 4 3 Wall
 # 틀린 줄 1: 값이 5개뿐
 block 20 1 0 2 2
 
 # 움직이는 발판: 바닥 끝(x 21)과 건너편 발판(x 28) 사이를 3초 주기로 좌우로 오간다
 mover 24.5 -0.25 0 3 0.5 3 Orange 1.5 0 0 3
-# 건너편 발판. Paper는 엔진에 없는 재질이라 경고가 나오고 기본 재질로 그린다
-block 31 -0.5 0 6 1 6 Paper
+# 건너편 발판. 재질을 생략하면 기본 재질(Paper)
+block 31 -0.5 0 6 1 6
 
-# 가시·책벌레·체크포인트·조각·등불은 지금은 모양만 놓인다
+# 가시는 block과 같이 중심과 크기를 적는다
 spike 13 0.25 0 1 0.5 1
-worm -4 0.2 0 2 1.5
-checkpoint 2 0.5 0
+
+# 책벌레·체크포인트·조각·등불은 y가 바닥(발) 기준이다. 지금은 모양만 놓인다
+worm -4 0 0 2 1.5
+checkpoint 2 0 0
 # 틀린 줄 2: 소수점을 쉼표로 적었다
 checkpoint 10 0,5 0
-checkpoint 19 0.5 0
-fragment 32 1 0
-lamp 33 3 0 1.5
+checkpoint 19 0 0
+fragment 32 0 0
+lamp 33 0 0 1.5
 # 틀린 줄 3: lamp를 lamb로 잘못 적었다
-lamb 33 3 -2 1.5
+lamb 33 0 -2 1.5
 
 hint 13 17 앞을 벽이 막으면 E를 눌러 3D로 바꿔 보세요
