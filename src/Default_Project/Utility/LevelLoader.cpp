@@ -13,6 +13,7 @@
 #include "BoxCollider.h"
 #include "PlayerController.h"
 #include "MovingPlatform.h"
+#include "Checkpoint.h"
 #include <fstream>
 #include <sstream>
 #include <charconv>
@@ -340,10 +341,10 @@ void LevelLoader::Build(AppContext& ctx, const LevelData& level) {
 		obj->AddComponent<MovingPlatform>(m.center, m.amplitude, m.period);
 	}
 
-	// ---- 아래는 임시 모양만 놓는다. 충돌체가 없어서 플레이어가 그대로 지나간다 ----
+	// ---- 아래는 임시 모양이다. 플레이어를 막는 충돌체가 없어서 플레이어가 그대로 지나간다 ----
 
 	// 가시: 빨간 상자. 적힌 재질은 LevelData에만 남긴다
-	// [연결 지점] 닿으면 HP -1, 마지막 체크포인트로 (기획서 4.4)
+	// [연결 지점] 닿으면 HP -1, 마지막 체크포인트로 (기획서 4.4). PlayerHealth::TakeDamage(true)를 부르면 된다
 	for (const LevelBox& s : level.spikes) {
 		CreateBox(ctx, "spike:" + to_string(s.line), s.center, s.size, materialChache["Red"]);
 	}
@@ -354,10 +355,13 @@ void LevelLoader::Build(AppContext& ctx, const LevelData& level) {
 		CreateOnFloor(ctx, "worm:" + to_string(w.line), w.position, vec3(0.6f, 0.4f, 0.4f), materialChache["Purple"]);
 	}
 
-	// 체크포인트: 가는 초록 기둥
-	// [연결 지점] 닿으면 위치 저장 (기획서 4.4). 게이지 0 + 2D 복귀 불가일 때 돌아갈 곳(DimensionSwitch::GetRespawnPoint)도 이 위치로
+	// 체크포인트: 가는 초록 기둥 (기획서 4.4)
+	//  닿음 판정에 쓸 범위(minPos/maxPos)를 주려고 트리거 충돌 상자를 붙인다. 트리거라서 플레이어를 막지 않는다(PlayerController::GetSolids가 뺀다).
+	//  닿으면 PlayerHealth가 위치를 저장하고 Checkpoint가 색을 바꾼다
 	for (const LevelPoint& c : level.checkpoints) {
-		CreateOnFloor(ctx, "checkpoint:" + to_string(c.line), c.position, vec3(0.15f, 1.0f, 0.15f), materialChache["Green"]);
+		Object* obj = CreateOnFloor(ctx, "checkpoint:" + to_string(c.line), c.position, vec3(0.15f, 1.0f, 0.15f), materialChache["Green"]);
+		obj->AddComponent<BoxCollider>()->isTrigger = true;
+		obj->AddComponent<Checkpoint>(c.position);
 	}
 
 	// 페이지 조각: 작은 주황 상자
@@ -373,7 +377,8 @@ void LevelLoader::Build(AppContext& ctx, const LevelData& level) {
 	}
 
 	// hint, killY, theme, page, next, name, subtitle은 장면에 보이는 것이 없어 LevelInfo에만 둔다
-	// [연결 지점] 힌트 구간 → 창 제목, killY 아래로 떨어짐 → HP -1, 조각 획득 → next 레벨 (기획서 4.4, 5.3)
+	// killY는 PlayerHealth가 읽는다(낙사, 기획서 4.4)
+	// [연결 지점] 힌트 구간 → 창 제목, 조각 획득 → next 레벨 (기획서 5.3)
 
 	if (level.hasStart) PlacePlayer(ctx, level);
 	else cout << "[레벨] 경고: " << level.file << "에 start가 없어 플레이어를 Game_Scene.json 위치에 둡니다" << endl;

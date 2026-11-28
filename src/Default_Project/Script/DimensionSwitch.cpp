@@ -2,7 +2,7 @@
 #include "Object.h"
 #include "BoxCollider.h"
 #include "PlayerController.h"
-#include "LevelLoader.h"
+#include "PlayerHealth.h"
 #include <algorithm>
 #include <cmath>
 
@@ -22,7 +22,8 @@ void DimensionSwitch::Start() {
 	}
 	if (!view) cout << "[DimensionSwitch] 장면에 ViewTransition이 없습니다." << endl;
 
-	if (player) startFoot = player->GetFootPosition();
+	health = gameObject->GetComponent<PlayerHealth>();
+	if (!health) cout << "[DimensionSwitch] " << gameObject->name << " 오브젝트에 PlayerHealth가 없어 게이지 0 + 2D 복귀 불가일 때 체크포인트로 보내지 못합니다." << endl;
 }
 
 // 한 프레임의 순서: 게이지 → 바닥나면 강제 복귀 → E 입력이면 전환 조건 검사
@@ -95,15 +96,15 @@ void DimensionSwitch::TryReturnTo2D() {
 
 // 게이지가 0이 되었을 때 (기획서 4.2)
 void DimensionSwitch::ForceReturnTo2D() {
-	// 2D로 돌아갈 수 없는 자리(겹침)라면 HP를 깎지 않고 마지막 체크포인트로 보낸 뒤 2D로 바꾼다
-	if (player->OverlapsAny2D()) {
-		vec3 point = GetRespawnPoint();
-		player->Respawn(point);
-		cout << "[게이지] 0%인데 2D로 돌아갈 수 없는 자리라서 (" << point.x << ", " << point.y << ", " << point.z
-			<< ")로 보냅니다 (HP 그대로)" << endl;
+	// 2D로 돌아갈 수 없는 자리(겹침)라면 HP를 깎지 않고 마지막 체크포인트로 보낸다(기획서 4.4).
+	// 위치 옮기기, 2D 전환, 게이지 채우기는 PlayerHealth::ReturnToCheckpoint가 한다(구덩이에 떨어졌을 때와 같은 함수).
+	if (health && player->OverlapsAny2D()) {
+		cout << "[게이지] 0%인데 2D로 돌아갈 수 없는 자리라서 마지막 체크포인트로 보냅니다 (HP 그대로)" << endl;
+		health->ReturnToCheckpoint();
+		return;
 	}
-	else cout << "[게이지] 0% → 2D로 강제 복귀" << endl;
 
+	cout << "[게이지] 0% → 2D로 강제 복귀" << endl;
 	view->BeginTransition(ViewMode::View2D);
 }
 
@@ -120,17 +121,6 @@ void DimensionSwitch::Block(SwitchBlock reason) {
 		cout << "[전환 막힘] 게이지 " << Percent(gauge) << "% (" << Percent(enterMin) << "% 미만이라 3D로 못 갑니다)" << endl;
 	}
 	else cout << "[전환 막힘] 2D로 보면 발판·벽과 겹쳐서 2D로 못 돌아갑니다" << endl;
-}
-
-// 게이지 0 + 2D 복귀 불가일 때 돌아갈 곳(발 위치)
-// [연결 지점] 체크포인트(기획서 4.4)가 생기면 마지막으로 닿은 체크포인트 위치를 돌려준다.
-//  체크포인트 저장은 아직 없어서 지금은 레벨 파일의 start를 쓴다.
-vec3 DimensionSwitch::GetRespawnPoint() {
-	for (auto& obj : gameObject->ctx.Hierarchy) {
-		LevelInfo* info = obj->GetComponent<LevelInfo>();
-		if (info && info->data.hasStart) return info->data.start;
-	}
-	return startFoot;
 }
 
 // 경고는 3D에 있을 때만 켠다. 2D에서는 게이지가 차는 중이라 깜빡일 필요가 없다.

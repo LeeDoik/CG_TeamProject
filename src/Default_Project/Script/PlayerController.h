@@ -46,7 +46,7 @@ public:
 	void Start() override;
 	void Update(float deltaTime) override;
 
-	// ---- 다른 스크립트(DimensionSwitch, PlayerSpriteAnimator)가 쓰는 함수 ----
+	// ---- 다른 스크립트(DimensionSwitch, PlayerHealth, PlayerSpriteAnimator)가 쓰는 함수 ----
 	bool IsGrounded() const { return ground != nullptr; }
 	vec3 GetVelocity() const { return velocity; }
 	BoxCollider* GetGround() const { return ground; }	// 지금 서 있는 발판. 2D에서는 2D 규칙으로 찾은 발판

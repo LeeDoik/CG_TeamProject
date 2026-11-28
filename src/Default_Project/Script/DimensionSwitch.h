@@ -5,6 +5,7 @@
 using namespace glm;
 
 class PlayerController;
+class PlayerHealth;
 
 // 전환이 막힌 이유 (UI·소리 담당이 이유마다 다르게 보여 주고 싶을 때 쓴다)
 enum class SwitchBlock {
@@ -39,6 +40,9 @@ public:
 	void Start() override;
 	void Update(float deltaTime) override;
 
+	// ---- 다른 스크립트가 부르는 함수 ----
+	void RefillGauge() { gauge = 1.0f; }	// 게이지를 가득 채운다 (체크포인트로 돌아갈 때 PlayerHealth가 부른다)
+
 	// ---- UI·소리가 읽는 값 ----
 	float GetGauge() const { return gauge; }							// 3D 게이지 0~1
 	bool IsGaugeWarning() const;	// 3D에 있고 게이지 20% 이하 → 게이지 막대 깜빡임 (2D에서 충전 중일 때는 끈다)
@@ -52,17 +56,16 @@ public:
 
 private:
 	PlayerController* player = nullptr;
+	PlayerHealth* health = nullptr;		// 게이지 0 + 2D 복귀 불가일 때 마지막 체크포인트로 보낸다
 	ViewTransition* view = nullptr;
 
 	float gauge = 1.0f;					// 처음에는 가득 차 있다
 	int blockedCount = 0;
 	float timeSinceBlocked = 999.0f;	// 아직 막힌 적 없음
 	SwitchBlock lastBlock = SwitchBlock::None;
-	vec3 startFoot = vec3(0.0f);		// 레벨에 start가 없을 때 돌아갈 곳(처음 발 위치)
 
 	void TryEnter3D();
 	void TryReturnTo2D();
 	void ForceReturnTo2D();
 	void Block(SwitchBlock reason);
-	vec3 GetRespawnPoint();
 };
