@@ -16,13 +16,23 @@ using namespace glm;
 //  여기서 하지 않는 것: 충돌 규칙, 2D/3D 전환 조건, 3D 게이지,
 //  가시·책벌레·체크포인트·조각·등불·힌트·낙사의 동작.
 //  담당자가 LevelLoader.cpp의 [연결 지점] 주석 자리에 붙인다.
+//
+//  형식 규칙 (기획서 6.7에 없던 부분은 팀에서 확정, PR #4)
+//   - 한 줄에 객체 하나. 첫 단어가 키워드(대소문자 구분), 값은 공백·탭으로 나눈다
+//   - 빈 줄과 #으로 시작하는 줄은 건너뛴다. 줄 중간의 #은 주석이 아니다
+//   - block·spike·mover의 x y z는 중심. start·worm·checkpoint·fragment·lamp의 y는 바닥(발)
+//   - name, subtitle, page, next, theme, killY, start가 두 번 나오면 뒤의 값을 쓴다
+//   - 꼭 있어야 하는 키워드는 없다. start가 없으면 경고 후 Game_Scene.json 위치, killY가 없으면 hasKillY = false
+//   - 재질을 안 적었거나 엔진에 없는 이름이면 Paper (엔진에 없는 이름은 경고). spike의 재질은 저장만 한다
+//   - 검사하는 것: 값 개수, 숫자 형식, theme 값, page 정수, w h d > 0, mover 주기 > 0. 그 밖의 범위는 검사하지 않는다
+//   - 파일은 UTF-8(BOM 있어도 됨). 잘못된 줄은 "파일:줄 번호: 이유"를 출력하고 그 줄만 건너뛴다
 // ======================================================================
 
 // block, spike: 중심과 크기
 struct LevelBox {
 	vec3 center;
 	vec3 size;			// w h d
-	string material;	// 재질 이름. 비어 있으면 기본 재질
+	string material;	// 재질 이름. 비어 있으면 기본 재질(Paper)
 	int line;			// 파일 줄 번호 (경고 메시지, 오브젝트 이름에 쓴다)
 };
 
@@ -38,7 +48,7 @@ struct LevelMover {
 
 // worm: x ± range를 speed로 왕복
 struct LevelWorm {
-	vec3 position;
+	vec3 position;		// 바닥(발) 기준
 	float range;
 	float speed;
 	int line;
@@ -46,14 +56,14 @@ struct LevelWorm {
 
 // checkpoint, fragment: 위치만 있다
 struct LevelPoint {
-	vec3 position;
+	vec3 position;		// 바닥(발) 기준
 	int line;
 };
 
 // lamp: 점광원
 struct LevelLamp {
-	vec3 position;
-	float brightness;	// 밝기
+	vec3 position;		// 바닥(발) 기준
+	float brightness;	// 밝기. 엔진 Light의 intensity로 쓴다(1 = 기본 밝기)
 	int line;
 };
 
@@ -70,9 +80,9 @@ struct LevelData {
 	string file;			// 읽은 파일 경로
 
 	string name;			// name: 스테이지 이름 (UTF-8)
-	string subtitle;		// subtitle: 장 제목 리본
+	string subtitle;		// subtitle: 장 제목 리본 (검사하지 않는다. 화면 점 글꼴은 영문 대문자·숫자만 나온다)
 	int page = 0;			// page: 조각 번호 (0이면 파일에 없음)
-	string next;			// next: 다음 레벨 파일. 비어 있으면 엔딩
+	string next;			// next: 다음 레벨 파일 이름. 지금 레벨 파일과 같은 폴더(Levels/) 기준, 공백 없는 한 단어. 비어 있으면 엔딩
 	string theme;			// theme: day, afternoon, sunset, night
 	bool hasKillY = false;
 	float killY = 0.0f;		// killY: 낙사 높이
