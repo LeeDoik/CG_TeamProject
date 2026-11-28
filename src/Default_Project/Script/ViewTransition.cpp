@@ -59,6 +59,20 @@ void ViewTransition::Shake(float duration) {
 	shakeTimer = duration;
 }
 
+// 다음 레벨을 시작할 때 (기획서 3.3, StageFlow::LoadNextLevel)
+//  0.5초 전환 없이 바로 2D로 돌린다. 새 스테이지는 언제나 2D에서 시작한다.
+//  바라보는 점도 플레이어 자리로 바로 옮긴다. 천천히 따라가게 두면 지난 레벨 끝에서 새 start까지 화면이 미끄러지기 때문이다.
+void ViewTransition::ResetTo2D() {
+	mode = ViewMode::View2D;
+	targetMode = ViewMode::View2D;
+	transitioning = false;
+	timer = 0.0f;
+	viewT = 0.0f;
+	shakeTimer = 0.0f;
+	if (target) focus = target->worldPosition;
+	UpdateCamera(0.0f);
+}
+
 void ViewTransition::UpdateCamera(float deltaTime) {
 	if (!camera) return;
 	Transform* tr = gameObject->GetComponent<Transform>();

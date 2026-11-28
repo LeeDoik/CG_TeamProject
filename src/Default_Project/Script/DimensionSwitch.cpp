@@ -3,6 +3,7 @@
 #include "BoxCollider.h"
 #include "PlayerController.h"
 #include "PlayerHealth.h"
+#include "StageFlow.h"
 #include <algorithm>
 #include <cmath>
 
@@ -17,8 +18,8 @@ void DimensionSwitch::Start() {
 	if (!player) cout << "[DimensionSwitch] " << gameObject->name << " 오브젝트에 PlayerController가 없습니다." << endl;
 
 	for (auto& obj : gameObject->ctx.Hierarchy) {
-		view = obj->GetComponent<ViewTransition>();
-		if (view) break;
+		if (!view) view = obj->GetComponent<ViewTransition>();
+		if (!stage) stage = obj->GetComponent<StageFlow>();
 	}
 	if (!view) cout << "[DimensionSwitch] 장면에 ViewTransition이 없습니다." << endl;
 
@@ -33,6 +34,9 @@ void DimensionSwitch::Update(float deltaTime) {
 
 	// 전환 0.5초 동안은 게임이 멈춘다(기획서 4.1). 게이지도 멈추고 E도 받지 않는다.
 	if (view->IsTransitioning()) return;
+
+	// 스테이지 클리어 대기 2초·엔딩 동안도 게임이 멈춘다(기획서 3.3). 게이지도 멈추고 E도 받지 않는다.
+	if (stage && stage->IsStopped()) return;
 
 	bool in3D = view->GetMode() == ViewMode::View3D;
 

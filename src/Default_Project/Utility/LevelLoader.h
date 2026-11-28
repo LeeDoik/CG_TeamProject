@@ -14,11 +14,12 @@ using namespace glm;
 //  파일 형식은 기획서 6.7을 그대로 따른다. 파서 코드는 AI가 작성을 도왔다(docs/AI_활용_기록.md).
 //
 //  여기서 하지 않는 것: 충돌 규칙, 2D/3D 전환 조건, 3D 게이지,
-//  가시·책벌레·조각·등불·힌트의 동작. 담당자가 LevelLoader.cpp의 [연결 지점] 주석 자리에 붙인다.
+//  가시·책벌레·등불·힌트의 동작. 담당자가 LevelLoader.cpp의 [연결 지점] 주석 자리에 붙인다.
 //  체크포인트는 깃발에 트리거 충돌 상자와 Checkpoint 컴포넌트만 붙이고, 저장과 낙사(killY)는 PlayerHealth가 한다.
+//  조각도 트리거 충돌 상자와 PageFragment 표시만 붙이고, 획득·스테이지 클리어·다음 레벨(next)은 StageFlow가 한다.
 //
 //  새 오브젝트는 ctx.pendingHierarchy에 넣는다(엔진 Object::Instantiate와 같은 방식, 엔진이 프레임 끝에 Hierarchy로 옮긴다).
-//  게임 도중 다음 레벨을 불러올 때는 main 루프가 Hierarchy를 도는 중이라, Hierarchy에 바로 넣으면
+//  게임 도중 StageFlow가 다음 레벨을 불러올 때는 main 루프가 Hierarchy를 도는 중이라, Hierarchy에 바로 넣으면
 //  vector가 다시 잡혀 루프가 망가지기 때문이다. 게임 루프 전에 처음 불러올 때는 Game_Scene이 바로 Hierarchy로 옮긴다.
 //
 //  형식 규칙 (기획서 6.7에 없던 부분은 팀에서 확정, PR #4)
@@ -108,7 +109,7 @@ struct LevelData {
 class LevelInfo : public Component {
 public:
 	LevelData data;
-	vector<Object*> objects;	// 이 레벨 파일로 만든 오브젝트 전부("Level" 자신 포함). 다음 레벨로 갈 때 이것만 지운다
+	vector<Object*> objects;	// 이 레벨 파일로 만든 오브젝트 전부("Level" 자신 포함). 다음 레벨로 갈 때 StageFlow가 이것만 지운다
 };
 
 class LevelLoader {

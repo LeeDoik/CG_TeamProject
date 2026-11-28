@@ -38,6 +38,7 @@ public:
 
 	void BeginTransition(ViewMode to);	// to 모드로 0.5초 전환을 시작한다 (조건 검사는 부르는 쪽에서)
 	void Shake(float duration);			// duration초 동안 화면을 흔든다 (전환 막힘)
+	void ResetTo2D();					// 전환 없이 바로 2D, 카메라도 플레이어에 바로 붙인다 (다음 레벨, StageFlow가 부른다)
 
 	static Component* CreateFromJson(Object* obj, const json& props, const map<string, Object*>& spawnedObjects);
 
