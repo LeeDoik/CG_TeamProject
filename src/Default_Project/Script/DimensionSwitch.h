@@ -31,7 +31,7 @@ public:
 	float drainTime = 5.0f;		// 3D에 있는 동안 100% → 0%에 걸리는 시간(초)
 	float fillTime = 2.5f;		// 2D에 있는 동안 0% → 100%에 걸리는 시간(초)
 	float enterMin = 0.15f;		// 게이지가 이보다 적으면 3D로 못 간다
-	float warningLevel = 0.2f;	// 게이지가 이 이하이면 경고(깜빡임)
+	float warningLevel = 0.2f;	// 3D에서 게이지가 이 이하이면 경고(깜빡임)
 
 	// 기획서 4.1 막힘 연출
 	float shakeTime = 0.3f;		// 화면 흔들림 시간(초)
@@ -41,7 +41,7 @@ public:
 
 	// ---- UI·소리가 읽는 값 ----
 	float GetGauge() const { return gauge; }							// 3D 게이지 0~1
-	bool IsGaugeWarning() const { return gauge <= warningLevel; }		// 20% 이하 → 게이지 막대 깜빡임
+	bool IsGaugeWarning() const;	// 3D에 있고 게이지 20% 이하 → 게이지 막대 깜빡임 (2D에서 충전 중일 때는 끈다)
 	ViewMode GetMode() const;		// 지금 모드(2D/3D 아이콘). 전환 0.5초 동안은 전환 전 모드
 	bool IsTransitioning() const;	// 전환 중(0.5초)인지
 	int GetBlockedCount() const { return blockedCount; }				// 전환이 막힐 때마다 1씩 늘어난다 → 값이 바뀌면 blocked 효과음

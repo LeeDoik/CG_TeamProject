@@ -133,6 +133,11 @@ vec3 DimensionSwitch::GetRespawnPoint() {
 	return startFoot;
 }
 
+// 경고는 3D에 있을 때만 켠다. 2D에서는 게이지가 차는 중이라 깜빡일 필요가 없다.
+bool DimensionSwitch::IsGaugeWarning() const {
+	return GetMode() == ViewMode::View3D && gauge <= warningLevel;
+}
+
 ViewMode DimensionSwitch::GetMode() const {
 	return view ? view->GetMode() : ViewMode::View2D;
 }
