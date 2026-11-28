@@ -244,6 +244,32 @@ BoxCollider* PlayerController::FindGround() {
 	return best;
 }
 
+// 발 아래쪽에서 가장 가까운 발판을 찾는다. 없으면 nullptr (기획서 4.1, 공중에서 2D → 3D 깊이 맞추기)
+//  x 구간(과 z 구간)이 플레이어와 겹치고 윗면이 발보다 아래인 상자 중에서 윗면이 가장 높은 것을 고른다.
+//  2D에서는 충돌 상자가 z로 늘어나 있어서 z 구간이 언제나 겹친다 → 깊이가 다른 발판도 찾는다(2D 기준).
+//  블록은 회전이 없어 OBB와 AABB가 같으므로 월드 AABB(minPos/maxPos) 구간을 그대로 비교한다.
+//  윗면 높이가 같으면 FindGround와 같은 기준(플레이어 z가 범위 안인 발판, 없으면 깊이 중앙이 가까운 발판)으로 고른다.
+BoxCollider* PlayerController::FindPlatformBelow() {
+	if (!box) return nullptr;
+	float feet = box->minPos.y;
+	float z = Center(box).z;
+
+	BoxCollider* best = nullptr;
+	for (BoxCollider* other : GetSolids()) {
+		if (IsIgnored(other)) continue;
+		bool overlapX = box->maxPos.x > other->minPos.x && box->minPos.x < other->maxPos.x;
+		bool overlapZ = box->maxPos.z > other->minPos.z && box->minPos.z < other->maxPos.z;
+		bool below = other->maxPos.y <= feet + skin;	// 윗면이 발보다 아래 (서 있을 때의 틈 skin까지 허용)
+		if (!overlapX || !overlapZ || !below) continue;
+
+		if (!best || other->maxPos.y > best->maxPos.y
+			|| (other->maxPos.y == best->maxPos.y && DepthDistance(other, z) < DepthDistance(best, z))) {
+			best = other;
+		}
+	}
+	return best;
+}
+
 vec3 PlayerController::GetFootPosition() const {
 	if (!box) return tr ? tr->worldPosition : vec3(0.0f);
 	vec3 c = Center(box);

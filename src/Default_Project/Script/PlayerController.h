@@ -50,6 +50,7 @@ public:
 	bool IsGrounded() const { return ground != nullptr; }
 	vec3 GetVelocity() const { return velocity; }
 	BoxCollider* GetGround() const { return ground; }	// 지금 서 있는 발판. 2D에서는 2D 규칙으로 찾은 발판
+	BoxCollider* FindPlatformBelow();		// 발 아래쪽에서 가장 가까운 발판. 2D에서는 깊이가 달라도 찾는다 (공중에서 2D → 3D)
 	vec3 GetFootPosition() const;			// 발바닥 가운데 (충돌 상자 바닥 가운데)
 	bool OverlapsAny2D();					// 2D 규칙(깊이 무시)으로 겹친 발판·벽이 있나 (3D → 2D 검사)
 	void SetDepth(float z);					// 깊이(z)만 옮긴다 (2D → 3D 깊이 맞추기)

@@ -64,15 +64,17 @@ void DimensionSwitch::TryEnter3D() {
 	// 깊이 맞추기: 2D 기준으로 서 있는 발판을 찾아, 플레이어 깊이(z)가 그 발판의 z 범위 안이면 그대로 두고
 	// 밖이면 발판 깊이 중앙으로 옮긴다. 2D에서는 깊이가 다른 발판 위에도 서 있을 수 있어서,
 	// 그대로 3D로 바꾸면 발밑이 비어 떨어지기 때문이다.
-	// 2D의 발판 찾기는 z로 늘린 상자로 했으므로(PlayerController::FindGround) 깊이가 다른 발판도 나온다.
-	// 공중이라 서 있는 발판이 없으면 깊이를 그대로 둔다.
-	BoxCollider* ground = player->GetGround();
-	if (ground) {
+	// 2D의 발판 찾기는 z로 늘린 상자로 하므로(PlayerController::FindGround) 깊이가 다른 발판도 나온다.
+	// 공중이면 아래쪽에서 가장 가까운 발판(2D 기준, FindPlatformBelow)에 같은 방법으로 맞춘다.
+	// 아래에도 발판이 없으면 깊이를 그대로 둔다.
+	bool standing = player->GetGround() != nullptr;
+	BoxCollider* platform = standing ? player->GetGround() : player->FindPlatformBelow();
+	if (platform) {
 		float z = player->GetFootPosition().z;
-		if (z < ground->minPos.z || z > ground->maxPos.z) {
-			float center = (ground->minPos.z + ground->maxPos.z) * 0.5f;
+		if (z < platform->minPos.z || z > platform->maxPos.z) {
+			float center = (platform->minPos.z + platform->maxPos.z) * 0.5f;
 			player->SetDepth(center);
-			cout << "[전환] 서 있는 발판의 깊이에 맞춤: z " << z << " → " << center << endl;
+			cout << "[전환] " << (standing ? "서 있는" : "아래쪽") << " 발판의 깊이에 맞춤: z " << z << " → " << center << endl;
 		}
 	}
 
