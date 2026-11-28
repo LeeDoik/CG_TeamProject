@@ -3,6 +3,7 @@
 #include "Texture.h"
 #include "SpriteRenderer.h"
 #include "PlayerController.h"
+#include "PlayerHealth.h"
 #include "BoxCollider.h"
 #include "ViewTransition.h"
 #include <cmath>
@@ -18,6 +19,7 @@ Texture* PlayerSpriteAnimator::LoadFrame(const string& name) {
 void PlayerSpriteAnimator::Start() {
 	sprite = gameObject->GetComponent<SpriteRenderer>();
 	controller = gameObject->GetComponent<PlayerController>();
+	health = gameObject->GetComponent<PlayerHealth>();
 	box = gameObject->GetComponent<BoxCollider>();
 
 	if (!sprite) cout << "[PlayerSprite] " << gameObject->name << " 오브젝트에 SpriteRenderer가 없습니다." << endl;
@@ -37,7 +39,7 @@ void PlayerSpriteAnimator::Start() {
 	walkTex[3] = LoadFrame("walk_04");
 	jumpRiseTex = LoadFrame("jump_rise");
 	jumpFallTex = LoadFrame("jump_fall");
-	hurtTex = LoadFrame("hurt");	// [연결 지점] 피격 상태가 생기면 SetOverrideState(Hurt)로 보여 준다
+	hurtTex = LoadFrame("hurt");	// 책벌레에 맞아 넉백 중일 때
 	clearTex = LoadFrame("clear");	// [연결 지점] 클리어 상태가 생기면 SetOverrideState(Clear)로 보여 준다
 
 	FitToManifest();
@@ -96,6 +98,13 @@ void PlayerSpriteAnimator::Update(float deltaTime) {
 	// 시점 전환 중에는 플레이어가 멈춰 있다. 전환 직전 그림을 그대로 둔다.
 	if (view && view->IsTransitioning()) return;
 
+	// 무적 중 깜빡임 (기획서 4.4 "1초 동안 무적"이 눈에 보이게): blinkInterval(0.1초)마다 반투명 ↔ 보통
+	//  그림 색에 곱하는 tint의 알파만 바꾼다. 무적이 끝나면 바로 보통(알파 1)으로 돌아온다.
+	bool invincible = health && health->IsInvincible();
+	blinkTimer = invincible ? blinkTimer + deltaTime : 0.0f;
+	bool dim = invincible && static_cast<int>(blinkTimer / blinkInterval) % 2 == 0;
+	sprite->tint.a = dim ? blinkAlpha : 1.0f;
+
 	if (hasOverride) {
 		state = overrideState;
 		ApplyFrame();
@@ -107,16 +116,20 @@ void PlayerSpriteAnimator::Update(float deltaTime) {
 	bool grounded = controller ? controller->IsGrounded() : true;
 	airTimer = grounded ? 0.0f : airTimer + deltaTime;
 
+	// 넉백 중(조작 불가 0.25초)이면 hurt 그림. 뒤로 밀려나는 것이므로 보던 방향(책벌레 쪽)은 바꾸지 않는다.
+	bool knockedBack = controller && controller->IsControlLocked();
+
 	// 방향: 왼쪽(-x)으로 가면 뒤집고, 오른쪽으로 가면 원래대로. 멈추면 그대로.
-	if (v.x < -walkSpeedThreshold) facingLeft = true;
-	else if (v.x > walkSpeedThreshold) facingLeft = false;
+	if (!knockedBack && v.x < -walkSpeedThreshold) facingLeft = true;
+	else if (!knockedBack && v.x > walkSpeedThreshold) facingLeft = false;
 
 	// 점프는 바로(위로 속도가 생기는 순간), 발판에서 떨어질 때는 airborneDelay 뒤에 공중으로 본다
 	bool airborne = !grounded && (v.y > 0.0f || airTimer >= airborneDelay);
 	float horizontalSpeed = std::sqrt(v.x * v.x + v.z * v.z);	// 3D의 깊이 이동(W/S)도 걷기로 본다
 
 	PlayerSpriteState next;
-	if (airborne) next = (v.y > 0.0f) ? PlayerSpriteState::JumpRise : PlayerSpriteState::JumpFall;
+	if (knockedBack) next = PlayerSpriteState::Hurt;
+	else if (airborne) next = (v.y > 0.0f) ? PlayerSpriteState::JumpRise : PlayerSpriteState::JumpFall;
 	else if (horizontalSpeed > walkSpeedThreshold) next = PlayerSpriteState::Walk;
 	else next = PlayerSpriteState::Idle;
 
