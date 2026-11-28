@@ -150,7 +150,13 @@
     <ClInclude Include="Script\CoreRules.h">
       <Filter>Script</Filter>
     </ClInclude>
+    <ClInclude Include="Script\Checkpoint.h">
+      <Filter>Script</Filter>
+    </ClInclude>
     <ClInclude Include="Script\DimensionSwitch.h">
+      <Filter>Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Script\PlayerHealth.h">
       <Filter>Script</Filter>
     </ClInclude>
     <ClInclude Include="Script\PlayerController.h">
@@ -245,7 +251,13 @@
     <ClCompile Include="Script\CoreRules.cpp">
       <Filter>Script</Filter>
     </ClCompile>
+    <ClCompile Include="Script\Checkpoint.cpp">
+      <Filter>Script</Filter>
+    </ClCompile>
     <ClCompile Include="Script\DimensionSwitch.cpp">
+      <Filter>Script</Filter>
+    </ClCompile>
+    <ClCompile Include="Script\PlayerHealth.cpp">
       <Filter>Script</Filter>
     </ClCompile>
     <ClCompile Include="Script\PlayerController.cpp">

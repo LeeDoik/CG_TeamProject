@@ -71,6 +71,10 @@
           "properties": {}
         },
         {
+          "type": "PlayerHealth",
+          "properties": {}
+        },
+        {
           "type": "SpriteRenderer",
           "properties": { "alphaCutoff": 0.1, "billboardY": false }
         },

@@ -49,10 +49,12 @@
     <ClInclude Include="Game_Scene.h" />
     <ClInclude Include="Script\SceneCamera.h" />
     <ClInclude Include="Script\TestScript.h" />
+    <ClInclude Include="Script\Checkpoint.h" />
     <ClInclude Include="Script\CoreRules.h" />
     <ClInclude Include="Script\DimensionSwitch.h" />
     <ClInclude Include="Script\MovingPlatform.h" />
     <ClInclude Include="Script\PlayerController.h" />
+    <ClInclude Include="Script\PlayerHealth.h" />
     <ClInclude Include="Script\PlayerSpriteAnimator.h" />
     <ClInclude Include="Script\ViewTransition.h" />
     <ClInclude Include="Utility\ColliderManager.h" />
@@ -83,10 +85,12 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Script\SceneCamera.cpp" />
     <ClCompile Include="Script\TestScript.cpp" />
+    <ClCompile Include="Script\Checkpoint.cpp" />
     <ClCompile Include="Script\CoreRules.cpp" />
     <ClCompile Include="Script\DimensionSwitch.cpp" />
     <ClCompile Include="Script\MovingPlatform.cpp" />
     <ClCompile Include="Script\PlayerController.cpp" />
+    <ClCompile Include="Script\PlayerHealth.cpp" />
     <ClCompile Include="Script\PlayerSpriteAnimator.cpp" />
     <ClCompile Include="Script\ViewTransition.cpp" />
     <ClCompile Include="Utility\ColliderManager.cpp" />
