@@ -58,7 +58,7 @@ public:
 	BoxCollider* GetGround() const { return ground; }	// 지금 서 있는 발판. 2D에서는 2D 규칙으로 찾은 발판
 	BoxCollider* FindPlatformBelow();		// 발 아래쪽에서 가장 가까운 발판. 2D에서는 깊이가 달라도 찾는다 (공중에서 2D → 3D)
 	vec3 GetFootPosition() const;			// 발바닥 가운데 (충돌 상자 바닥 가운데)
-	bool OverlapsAny2D();					// 2D 규칙(깊이 무시)으로 겹친 발판·벽이 있나 (3D → 2D 검사)
+	bool OverlapsAny2D();					// 2D 규칙(깊이 무시)으로 겹친 발판·벽·가시가 있나 (3D → 2D 검사)
 	void SetDepth(float z);					// 깊이(z)만 옮긴다 (2D → 3D 깊이 맞추기)
 	void RideAlong(vec3 delta, BoxCollider* platform);	// 서 있는 발판이 delta만큼 움직였을 때 같이 움직인다 (MovingPlatform이 부른다)
 	void Respawn(vec3 footPosition);		// 발이 footPosition에 오게 옮기고 속도·발판 기억을 지운다

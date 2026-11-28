@@ -347,6 +347,7 @@ void LevelLoader::Build(AppContext& ctx, const LevelData& level) {
 
 	// 가시: 빨간 상자 + 트리거 충돌 상자 + Spike 표시. 적힌 재질은 LevelData에만 남긴다
 	//  트리거라서 플레이어를 막지 않는다(PlayerController::GetSolids가 뺀다). 상자는 닿음 판정에 쓸 범위(minPos/maxPos)만 준다.
+	//  3D → 2D 전환 검사(PlayerController::OverlapsAny2D)에서는 Spike 표시를 보고 벽처럼 센다.
 	//  닿으면 PlayerHealth가 HP -1, 마지막 체크포인트로 보낸다(기획서 4.4)
 	for (const LevelBox& s : level.spikes) {
 		Object* obj = CreateBox(ctx, "spike:" + to_string(s.line), s.center, s.size, materialChache["Red"]);

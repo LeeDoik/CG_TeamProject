@@ -83,7 +83,8 @@ bool PlayerHealth::Touches(BoxCollider* other) const {
 //  가시는 트리거라서 플레이어를 막지 않는다(PlayerController::GetSolids가 뺀다). 이유:
 //   - 닿는 순간 체크포인트로 보내므로 막아 세울 필요가 없다.
 //   - 막는 상자(고체)로 만들면 플레이어가 면에 skin(0.005칸) 띄워 붙어서 겹치지 않으므로, "닿음"을 따로 틈까지 재야 한다.
-//     또 3D → 2D 전환 검사(OverlapsAny2D)가 가시를 벽처럼 세어 가시 옆에서 2D로 못 돌아가게 된다.
+//  다만 3D → 2D 전환 검사(PlayerController::OverlapsAny2D)에서는 가시를 벽처럼 센다(팀 결정).
+//   그래서 2D로 바꾸자마자 가시에 닿는 일은 없다. 3D에서 가시 옆에 있으면 2D로 못 돌아간다.
 //  무적 중이면 TakeDamage가 아무 일도 하지 않는다(팀 결정: 무적 중 가시는 체크포인트로도 보내지 않는다).
 //  가시 여러 개에 한꺼번에 닿아도 한 번만 맞으면 되므로 첫 가시에서 멈춘다.
 void PlayerHealth::TouchSpikes() {

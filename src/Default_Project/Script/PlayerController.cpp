@@ -5,6 +5,7 @@
 #include "RigidBody.h"
 #include "ColliderManager.h"
 #include "ViewTransition.h"
+#include "Spike.h"
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
@@ -287,16 +288,26 @@ vec3 PlayerController::GetFootPosition() const {
 	return vec3(c.x, box->minPos.y, c.z);
 }
 
-// 2D 규칙(깊이 무시)으로 겹친 발판·벽이 있는지 본다 (기획서 4.1 "3D → 2D" 검사)
+// 2D 규칙(깊이 무시)으로 겹친 발판·벽·가시가 있는지 본다 (기획서 4.1 "3D → 2D" 검사)
 //  충돌 상자를 잠깐 z로 늘려서 검사하고 원래대로 돌린다. 무시 중인 상자도 센다.
+//  가시는 트리거라 GetSolids에 없지만 여기서는 벽처럼 센다(팀 결정). 2D로 바꾸자마자 가시 속에 들어간 모습이 되지 않게 하려는 것이다.
+//   → 3D 안쪽 길에서 가시 옆에 있으면 E를 눌러도 2D로 못 돌아가고(전환 막힘),
+//     그 자리에서 게이지가 0이 되면 HP 그대로 마지막 체크포인트로 간다(DimensionSwitch::ForceReturnTo2D).
 bool PlayerController::OverlapsAny2D() {
 	if (!box) return false;
 
 	bool wasIgnoringDepth = depthIgnored;
 	SetDepthIgnored(true);
 
+	// 막는 상자(발판·벽)에 가시 상자를 더한다
+	vector<BoxCollider*> blockers = GetSolids();
+	for (Collider* col : gameObject->ctx.CollisionObjects) {
+		if (col->type != ColliderType::Box || !col->gameObject->isValid) continue;
+		if (col->gameObject->GetComponent<Spike>()) blockers.push_back(static_cast<BoxCollider*>(col));
+	}
+
 	bool hit = false;
-	for (BoxCollider* other : GetSolids()) {
+	for (BoxCollider* other : blockers) {
 		if (Overlaps(other)) {
 			hit = true;
 			break;
