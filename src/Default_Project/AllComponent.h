@@ -12,5 +12,6 @@
 #include "SceneCamera.h"
 #include "ViewTransition.h"
 #include "PlayerController.h"
+#include "DimensionSwitch.h"
 #include "SpriteRenderer.h"
 #include "PlayerSpriteAnimator.h"

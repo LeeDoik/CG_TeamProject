@@ -3,7 +3,6 @@
 #include "Texture.h"
 #include "SpriteRenderer.h"
 #include "PlayerController.h"
-#include "RigidBody.h"
 #include "BoxCollider.h"
 #include "ViewTransition.h"
 #include <cmath>
@@ -19,7 +18,6 @@ Texture* PlayerSpriteAnimator::LoadFrame(const string& name) {
 void PlayerSpriteAnimator::Start() {
 	sprite = gameObject->GetComponent<SpriteRenderer>();
 	controller = gameObject->GetComponent<PlayerController>();
-	rb = gameObject->GetComponent<RigidBody>();
 	box = gameObject->GetComponent<BoxCollider>();
 
 	if (!sprite) cout << "[PlayerSprite] " << gameObject->name << " 오브젝트에 SpriteRenderer가 없습니다." << endl;
@@ -104,8 +102,8 @@ void PlayerSpriteAnimator::Update(float deltaTime) {
 		return;
 	}
 
-	// PlayerController가 이번 프레임에 정한 속도 (충돌 처리는 이 뒤에 일어난다)
-	vec3 v = rb ? rb->velocity : vec3(0.0f);
+	// PlayerController가 이번 프레임에 움직인 속도 (벽·바닥에 부딪힌 축은 0)
+	vec3 v = controller ? controller->GetVelocity() : vec3(0.0f);
 	bool grounded = controller ? controller->IsGrounded() : true;
 	airTimer = grounded ? 0.0f : airTimer + deltaTime;
 

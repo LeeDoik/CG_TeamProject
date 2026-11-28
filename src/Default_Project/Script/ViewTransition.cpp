@@ -28,12 +28,7 @@ void ViewTransition::Start() {
 }
 
 void ViewTransition::Update(float deltaTime) {
-	InputManager& input = gameObject->ctx.inputManager;
-
-	// E: 2D ↔ 3D 전환 시작 (전환 조건 검사는 2단계에서 추가)
-	if (!transitioning && input.GetKeyDown(GLFW_KEY_E)) {
-		BeginTransition(mode == ViewMode::View2D ? ViewMode::View3D : ViewMode::View2D);
-	}
+	// E 키와 전환 조건(게이지, 겹침)은 DimensionSwitch가 보고 BeginTransition을 부른다
 
 	// 전환 진행: 0.5초 동안 viewT를 0→1 또는 1→0으로 바꾼다
 	if (transitioning) {
@@ -52,10 +47,16 @@ void ViewTransition::Update(float deltaTime) {
 }
 
 void ViewTransition::BeginTransition(ViewMode to) {
+	if (transitioning || to == mode) return;
 	targetMode = to;
 	transitioning = true;
 	timer = 0.0f;
 	cout << "[시점] " << (to == ViewMode::View3D ? "2D → 3D" : "3D → 2D") << " 전환 시작" << endl;
+}
+
+void ViewTransition::Shake(float duration) {
+	shakeDuration = duration;
+	shakeTimer = duration;
 }
 
 void ViewTransition::UpdateCamera(float deltaTime) {
@@ -80,6 +81,16 @@ void ViewTransition::UpdateCamera(float deltaTime) {
 	quat rot = slerp(rot2D, rot3D, s);
 	float dist = mix(distance2D, distance3D, s);
 	vec3 eye = look - (rot * vec3(0.0f, 0.0f, 1.0f)) * dist;
+
+	// 흔들림(전환 막힘): 카메라를 화면의 좌우·위아래로 조금씩 떨게 한다. 남은 시간에 비례해 약해진다.
+	if (shakeTimer > 0.0f) {
+		shakeTimer = std::max(0.0f, shakeTimer - deltaTime);
+		float strength = shakeAmplitude * (shakeTimer / shakeDuration);
+		float phase = shakeTimer * 60.0f;
+		vec3 screenRight = rot * vec3(1.0f, 0.0f, 0.0f);
+		vec3 screenUp = rot * vec3(0.0f, 1.0f, 0.0f);
+		eye += screenRight * (std::sin(phase * 1.3f) * strength) + screenUp * (std::cos(phase) * strength);
+	}
 
 	tr->SetLocalRotation(rot);
 	tr->SetLocalPosition(eye);

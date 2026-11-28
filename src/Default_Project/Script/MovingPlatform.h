@@ -4,11 +4,15 @@
 using namespace glm;
 
 class Transform;
+class BoxCollider;
+class ViewTransition;
+class PlayerController;
 
 // 움직이는 발판 (레벨 파일의 mover, 기획서 5.3)
 //  위치 = 중심 + 진폭 × sin(2π t / 주기). t는 레벨을 불러온 뒤 지난 시간이라 처음에는 중심에 있다.
-//  이동만 한다. 충돌은 같은 오브젝트의 BoxCollider로 엔진이 그대로 처리한다.
-//  위에 탄 플레이어를 함께 옮기는 규칙(기획서 4.3)은 충돌 규칙을 다시 쓸 때 정한다.
+//  t는 게임이 흐를 때만 늘어난다. 시점 전환 0.5초 동안은 게임이 멈추므로(기획서 4.1) 발판도 멈춘다.
+//  플레이어가 이 발판 위에 서 있으면 발판이 움직인 만큼 같이 옮긴다(PlayerController::RideAlong, 기획서 4.3).
+//  위에 서 있지 않을 때 올라오는 발판에 발이 파묻히면 PlayerController가 발판 위로 올린다.
 class MovingPlatform : public Component {
 public:
 	vec3 center;		// 중심
@@ -22,5 +26,8 @@ public:
 
 private:
 	Transform* tr = nullptr;
+	BoxCollider* box = nullptr;
+	ViewTransition* view = nullptr;
+	PlayerController* player = nullptr;
 	float elapsed = 0.0f;	// t
 };

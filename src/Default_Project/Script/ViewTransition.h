@@ -13,8 +13,10 @@ enum class ViewMode {
 
 // 메인 카메라에 붙이는 컴포넌트
 //  - 플레이어(target)를 따라가는 카메라
-//  - E 키로 2D ↔ 3D 시점 전환 (0.5초 동안 투영 행렬 보간, 그동안 게임 멈춤)
+//  - 2D ↔ 3D 시점 전환 (0.5초 동안 투영 행렬 보간, 그동안 게임 멈춤)
+//    E 키 입력과 전환 조건 검사는 DimensionSwitch가 하고, 통과하면 BeginTransition을 부른다
 //  - Camera의 투영 행렬을 덮어써서 전환 중간 행렬을 넘긴다
+//  - 전환이 막히면 화면을 흔든다(Shake)
 class ViewTransition : public Component {
 public:
 	// 기획서 4.1 수치
@@ -25,6 +27,7 @@ public:
 	float distance2D = 50.0f;		// 2D 카메라 거리. 직교라 화면 크기에는 영향 없음
 	float focusHeight = 1.0f;		// 바라보는 점 = 플레이어 위치 + 이 높이
 	float followSharpness = 8.0f;	// 따라가는 빠르기(클수록 바로 붙음)
+	float shakeAmplitude = 0.15f;	// 흔들림 세기(칸). 흔들리는 동안 점점 줄어든다
 
 	void Start() override;
 	void Update(float deltaTime) override;
@@ -32,6 +35,9 @@ public:
 	ViewMode GetMode() const { return mode; }
 	bool IsTransitioning() const { return transitioning; }
 	float GetViewT() const { return viewT; }	// 0 = 2D, 1 = 3D
+
+	void BeginTransition(ViewMode to);	// to 모드로 0.5초 전환을 시작한다 (조건 검사는 부르는 쪽에서)
+	void Shake(float duration);			// duration초 동안 화면을 흔든다 (전환 막힘)
 
 	static Component* CreateFromJson(Object* obj, const json& props, const map<string, Object*>& spawnedObjects);
 
@@ -46,7 +52,8 @@ private:
 	float timer = 0.0f;
 	float viewT = 0.0f;
 	vec3 focus = vec3(0.0f);
+	float shakeTimer = 0.0f;		// 남은 흔들림 시간
+	float shakeDuration = 0.0f;		// 이번 흔들림 전체 시간
 
-	void BeginTransition(ViewMode to);
 	void UpdateCamera(float deltaTime);
 };

@@ -67,8 +67,8 @@
           "properties": { "view": "MainCamera" }
         },
         {
-          "type": "RigidBody",
-          "properties": { "mass": 1.0, "useGravity": false }
+          "type": "DimensionSwitch",
+          "properties": {}
         },
         {
           "type": "SpriteRenderer",

@@ -333,7 +333,7 @@ void LevelLoader::Build(AppContext& ctx, const LevelData& level) {
 		obj->AddComponent<BoxCollider>();
 	}
 
-	// 움직이는 발판: 고정 발판 + MovingPlatform(이동만). 위에 탄 플레이어를 옮기는 규칙은 없다(기획서 4.3)
+	// 움직이는 발판: 고정 발판 + MovingPlatform(이동만). 위에 탄 플레이어도 같이 옮긴다(PlayerController::RideAlong, 기획서 4.3)
 	for (const LevelMover& m : level.movers) {
 		Object* obj = CreateBox(ctx, "mover:" + to_string(m.line), m.center, m.size, FindMaterial(m.material, level, m.line));
 		obj->AddComponent<BoxCollider>();
@@ -355,7 +355,7 @@ void LevelLoader::Build(AppContext& ctx, const LevelData& level) {
 	}
 
 	// 체크포인트: 가는 초록 기둥
-	// [연결 지점] 닿으면 위치 저장 (기획서 4.4)
+	// [연결 지점] 닿으면 위치 저장 (기획서 4.4). 게이지 0 + 2D 복귀 불가일 때 돌아갈 곳(DimensionSwitch::GetRespawnPoint)도 이 위치로
 	for (const LevelPoint& c : level.checkpoints) {
 		CreateOnFloor(ctx, "checkpoint:" + to_string(c.line), c.position, vec3(0.15f, 1.0f, 0.15f), materialChache["Green"]);
 	}
