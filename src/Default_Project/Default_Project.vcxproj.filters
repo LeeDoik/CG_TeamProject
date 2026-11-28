@@ -150,6 +150,12 @@
     <ClInclude Include="Script\CoreRules.h">
       <Filter>Script</Filter>
     </ClInclude>
+    <ClInclude Include="Script\BookWorm.h">
+      <Filter>Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Script\Spike.h">
+      <Filter>Script</Filter>
+    </ClInclude>
     <ClInclude Include="Script\Checkpoint.h">
       <Filter>Script</Filter>
     </ClInclude>
@@ -249,6 +255,9 @@
       <Filter>리소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="Script\CoreRules.cpp">
+      <Filter>Script</Filter>
+    </ClCompile>
+    <ClCompile Include="Script\BookWorm.cpp">
       <Filter>Script</Filter>
     </ClCompile>
     <ClCompile Include="Script\Checkpoint.cpp">

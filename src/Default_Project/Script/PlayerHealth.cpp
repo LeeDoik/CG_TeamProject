@@ -5,6 +5,8 @@
 #include "DimensionSwitch.h"
 #include "ViewTransition.h"
 #include "Checkpoint.h"
+#include "Spike.h"
+#include "BookWorm.h"
 #include "LevelLoader.h"
 #include <algorithm>
 
@@ -14,10 +16,14 @@ void PlayerHealth::Start() {
 	box = gameObject->GetComponent<BoxCollider>();
 	if (!player || !box) cout << "[PlayerHealth] " << gameObject->name << " 오브젝트에 PlayerController나 BoxCollider가 없습니다." << endl;
 
-	// 장면에서 시점 전환 카메라, 체크포인트 깃발, 레벨 정보(killY)를 찾는다
+	// 장면에서 시점 전환 카메라, 체크포인트 깃발, 가시, 책벌레, 레벨 정보(killY)를 찾는다
 	for (auto& obj : gameObject->ctx.Hierarchy) {
 		if (!view) view = obj->GetComponent<ViewTransition>();
 		if (Checkpoint* flag = obj->GetComponent<Checkpoint>()) flags.push_back(flag);
+		if (obj->GetComponent<Spike>()) {
+			if (BoxCollider* spikeBox = obj->GetComponent<BoxCollider>()) spikes.push_back(spikeBox);
+		}
+		if (BookWorm* worm = obj->GetComponent<BookWorm>()) worms.push_back(worm);
 		if (LevelInfo* info = obj->GetComponent<LevelInfo>()) {
 			hasKillY = info->data.hasKillY;
 			killY = info->data.killY;
@@ -36,7 +42,7 @@ void PlayerHealth::Start() {
 	}
 }
 
-// 한 프레임의 순서: 무적 시간 → 체크포인트 깃발 → 낙사. PlayerController·DimensionSwitch가 이번 프레임에 다 움직인 뒤에 본다.
+// 한 프레임의 순서: 무적 시간 → 체크포인트 깃발 → 가시 → 책벌레 → 낙사. PlayerController·DimensionSwitch가 이번 프레임에 다 움직인 뒤에 본다.
 void PlayerHealth::Update(float deltaTime) {
 	if (!player || !box) return;
 
@@ -49,8 +55,83 @@ void PlayerHealth::Update(float deltaTime) {
 	// 2. 체크포인트 깃발에 닿았나
 	TouchCheckpoints();
 
-	// 3. 낙사: 발이 killY보다 아래로 내려가면 HP -1, 마지막 체크포인트로 (기획서 4.4)
+	// 3. 가시에 닿았나 (기획서 4.4)
+	TouchSpikes();
+
+	// 4. 책벌레에 닿았나: 밟기 또는 피해 (기획서 4.4, 5.2)
+	TouchWorms();
+
+	// 5. 낙사: 발이 killY보다 아래로 내려가면 HP -1, 마지막 체크포인트로 (기획서 4.4)
 	if (hasKillY && player->GetFootPosition().y < killY) FallIntoPit();
+}
+
+// 플레이어와 상자가 닿았나: x·y·z 구간이 모두 겹치면 닿은 것이다 (기획서 4.3 차원별 충돌 규칙)
+//  가시와 책벌레는 이 함수 하나로 2D와 3D를 다르게 판단한다.
+//   - 2D: PlayerController가 플레이어 상자를 z로 100칸까지 늘려 둔다 → z 구간은 언제나 겹친다 → x·y만 본 것과 같다(깊이 무시)
+//   - 3D: 원래 크기(깊이 0.5칸) → x·y·z가 모두 겹쳐야 닿는다 → 깊이를 돌아 피할 수 있다
+//  벽·발판에 막히는 규칙과 같은 상자를 쓰므로, 2D에서 그 깊이의 벽에 막히는 자리면 그 깊이의 가시에도 닿는다.
+//  상자에 회전이 없어서 BoxCollider가 계산해 둔 월드 AABB(minPos/maxPos)를 그대로 비교한다(TouchCheckpoints와 같은 방식).
+bool PlayerHealth::Touches(BoxCollider* other) const {
+	bool overlapX = box->maxPos.x > other->minPos.x && box->minPos.x < other->maxPos.x;
+	bool overlapY = box->maxPos.y > other->minPos.y && box->minPos.y < other->maxPos.y;
+	bool overlapZ = box->maxPos.z > other->minPos.z && box->minPos.z < other->maxPos.z;
+	return overlapX && overlapY && overlapZ;
+}
+
+// 가시 (기획서 4.4 "가시에 닿음 → HP -1, 마지막 체크포인트로")
+//  위·옆 구분 없이 닿으면 피해다(위에 내려앉아도 피해).
+//  가시는 트리거라서 플레이어를 막지 않는다(PlayerController::GetSolids가 뺀다). 이유:
+//   - 닿는 순간 체크포인트로 보내므로 막아 세울 필요가 없다.
+//   - 막는 상자(고체)로 만들면 플레이어가 면에 skin(0.005칸) 띄워 붙어서 겹치지 않으므로, "닿음"을 따로 틈까지 재야 한다.
+//  다만 3D → 2D 전환 검사(PlayerController::OverlapsAny2D)에서는 가시를 벽처럼 센다(팀 결정).
+//   그래서 2D로 바꾸자마자 가시에 닿는 일은 없다. 3D에서 가시 옆에 있으면 2D로 못 돌아간다.
+//  무적 중이면 TakeDamage가 아무 일도 하지 않는다(팀 결정: 무적 중 가시는 체크포인트로도 보내지 않는다).
+//  가시 여러 개에 한꺼번에 닿아도 한 번만 맞으면 되므로 첫 가시에서 멈춘다.
+void PlayerHealth::TouchSpikes() {
+	for (BoxCollider* spike : spikes) {
+		if (!Touches(spike)) continue;
+		cout << "[가시] " << spike->gameObject->name << "에 닿았습니다" << endl;
+		TakeDamage(true);
+		return;
+	}
+}
+
+// 책벌레 (기획서 4.4, 5.2)
+//  닿음 판단은 가시와 같다(Touches). 닿았으면 "위에서 밟았나"를 본다.
+//   밟음 = 이번 프레임에 발이 내려왔고(내려오는 중), 움직이기 전 발이 책벌레 윗면보다 위(또는 같은 높이)였다.
+//    → 위에서 떨어지다가 이번 프레임에 처음 윗면 아래로 들어왔다는 뜻이다.
+//    속도 대신 "발이 내려왔나"를 보는 이유: 프레임이 느려(최대 0.05초) 한 프레임에 책벌레(높이 0.4칸)를 지나 바닥까지 내려가면
+//    바닥에 부딪혀 속도 y가 0이 되지만, 발은 내려왔으므로 밟은 것으로 볼 수 있다.
+//    → 책벌레 처치(사라짐), 플레이어는 위로 튀어 오른다(초속 8). 무적 중이어도 밟을 수 있다(피해가 아니므로).
+//   그 밖(옆에서 걸어 들어감, 아래에서 뛰어오르다 닿음, 책벌레가 걸어와 닿음)
+//    → HP -1, 책벌레 반대쪽 위로 넉백, 0.25초 조작 불가, 1초 무적 (TakeDamage가 무적 중이면 무시한다)
+//  "반대쪽"은 플레이어 중심이 책벌레 중심보다 오른쪽이면 오른쪽(+1), 아니면 왼쪽(-1)이다.
+void PlayerHealth::TouchWorms() {
+	float footBefore = player->GetFootYBeforeMove();
+	float footNow = player->GetFootPosition().y;
+
+	for (BookWorm* worm : worms) {
+		if (!worm->IsAlive()) continue;
+		BoxCollider* wormBox = worm->gameObject->GetComponent<BoxCollider>();
+		if (!wormBox || !Touches(wormBox)) continue;
+
+		bool movedDown = footNow < footBefore;
+		bool wasAbove = footBefore >= wormBox->maxPos.y;
+		if (movedDown && wasAbove) {
+			worm->Kill();
+			player->StompBounce();
+			++stompCount;
+			cout << "[책벌레] " << worm->gameObject->name << " 밟아서 처치" << endl;
+			// [연결 지점] stomp 효과음(소리 담당): GetStompCount()가 바뀐 프레임에 낸다
+			continue;
+		}
+
+		float playerX = (box->minPos.x + box->maxPos.x) * 0.5f;
+		float wormX = (wormBox->minPos.x + wormBox->maxPos.x) * 0.5f;
+		float away = (playerX >= wormX) ? 1.0f : -1.0f;
+		if (!IsInvincible()) cout << "[책벌레] " << worm->gameObject->name << "에 옆·아래에서 닿았습니다" << endl;
+		TakeDamage(false, away);
+	}
 }
 
 // 체크포인트 깃발에 닿았는지 본다 (기획서 4.4 "체크포인트 깃발에 닿음 → 그 자리를 저장하고 효과음")
@@ -85,15 +166,17 @@ void PlayerHealth::FallIntoPit() {
 }
 
 // 적·가시에 닿은 피해 (기획서 4.4): HP -1, 그 뒤 invincibleTime(1초) 동안 무적.
-//  toCheckpoint면 마지막 체크포인트로 보낸다(가시). 책벌레는 false로 부르고 넉백한다.
+//  toCheckpoint면 마지막 체크포인트로 보낸다(가시).
+//  아니면 knockbackDir 쪽 위로 넉백한다(책벌레, 기획서 4.4 "반대쪽 위로 튕겨 나가고(0.25초 동안 조작 불가)").
 //  무적 중이면 아무 일도 하지 않는다. 무적 검사는 이 함수에만 있어서 낙사(FallIntoPit)는 무적이어도 HP가 준다.
-void PlayerHealth::TakeDamage(bool toCheckpoint) {
+//  HP가 0이 되면 LoseHP가 게임 오버(start로)까지 처리하므로 체크포인트·넉백은 하지 않는다.
+void PlayerHealth::TakeDamage(bool toCheckpoint, float knockbackDir) {
 	if (IsInvincible()) return;
 	invincibleTimer = invincibleTime;
 
-	// [연결 지점] 책벌레 작업(기획서 4.4): 넉백(반대쪽 위로 튕겨 나감, 0.25초 조작 불가)은
-	//  toCheckpoint가 false일 때 여기서 PlayerController에 속도를 넣는다(PlayerController에 함수를 더한다).
-	if (LoseHP() && toCheckpoint) ReturnToCheckpoint();
+	if (!LoseHP()) return;
+	if (toCheckpoint) ReturnToCheckpoint();
+	else if (knockbackDir != 0.0f) player->Knockback(knockbackDir);
 }
 
 // HP를 1 깎는다. 아직 살아 있으면 true(부르는 쪽이 체크포인트로 보낸다), HP가 0이 되면 게임 오버로 가고 false.
@@ -138,14 +221,16 @@ void PlayerHealth::GameOver() {
 	RestartStage();
 }
 
-// 지금 스테이지를 처음부터 (기획서 3.3 게임 오버의 [다시 시작]): HP 3, 켜진 깃발을 끄고 start로
-//  임시라서 HP·체크포인트·무적·위치·게이지만 처음으로 돌린다. 움직이는 발판(나중에 책벌레·조각)은 그대로다.
+// 지금 스테이지를 처음부터 (기획서 3.3 게임 오버의 [다시 시작]): HP 3, 켜진 깃발을 끄고 처치한 책벌레를 되살려 start로
+//  임시라서 HP·체크포인트·무적·위치·게이지·책벌레만 처음으로 돌린다. 움직이는 발판(나중에 조각)은 그대로다.
+//  책벌레는 체크포인트로 돌아갈 때는 되살리지 않는다(기획서에 없어서 정함). 한 번 처치한 책벌레가 다시 길을 막지 않게 하려는 것이다.
 //  [연결 지점] 화면 흐름이 레벨을 다시 불러오는 방식으로 다시 시작하면 그쪽이 이 일을 대신한다.
 void PlayerHealth::RestartStage() {
 	hp = maxHP;
 	invincibleTimer = 0.0f;
 	checkpoint = startFoot;
 	for (Checkpoint* flag : flags) flag->SetActive(false);
+	for (BookWorm* worm : worms) worm->Revive();
 	cout << "[HP] 스테이지를 처음부터 다시 합니다 (HP " << hp << ")" << endl;
 	ReturnToCheckpoint();
 }

@@ -48,7 +48,8 @@ void DimensionSwitch::Update(float deltaTime) {
 	}
 
 	// 3. E: 지금 모드의 반대쪽으로 전환을 시도한다
-	if (gameObject->ctx.inputManager.GetKeyDown(GLFW_KEY_E)) {
+	//    책벌레에 맞아 넉백 중(0.25초 조작 불가, 기획서 4.4)이면 E도 받지 않는다
+	if (!player->IsControlLocked() && gameObject->ctx.inputManager.GetKeyDown(GLFW_KEY_E)) {
 		if (in3D) TryReturnTo2D();
 		else TryEnter3D();
 	}
@@ -84,8 +85,8 @@ void DimensionSwitch::TryEnter3D() {
 
 // 3D → 2D (기획서 4.1)
 void DimensionSwitch::TryReturnTo2D() {
-	// 조건: 2D 규칙(깊이 무시)으로 겹치는 발판·벽이 없어야 한다.
-	// 겹친 채로 2D가 되면 플레이어가 벽 속에 들어간 모습이 되기 때문이다.
+	// 조건: 2D 규칙(깊이 무시)으로 겹치는 발판·벽·가시가 없어야 한다.
+	// 겹친 채로 2D가 되면 플레이어가 벽(가시) 속에 들어간 모습이 되기 때문이다.
 	if (player->OverlapsAny2D()) {
 		Block(SwitchBlock::Overlap);
 		return;
@@ -96,7 +97,7 @@ void DimensionSwitch::TryReturnTo2D() {
 
 // 게이지가 0이 되었을 때 (기획서 4.2)
 void DimensionSwitch::ForceReturnTo2D() {
-	// 2D로 돌아갈 수 없는 자리(겹침)라면 HP를 깎지 않고 마지막 체크포인트로 보낸다(기획서 4.4).
+	// 2D로 돌아갈 수 없는 자리(발판·벽·가시와 겹침)라면 HP를 깎지 않고 마지막 체크포인트로 보낸다(기획서 4.2, 4.4).
 	// 위치 옮기기, 2D 전환, 게이지 채우기는 PlayerHealth::ReturnToCheckpoint가 한다(구덩이에 떨어졌을 때와 같은 함수).
 	if (health && player->OverlapsAny2D()) {
 		cout << "[게이지] 0%인데 2D로 돌아갈 수 없는 자리라서 마지막 체크포인트로 보냅니다 (HP 그대로)" << endl;
@@ -120,7 +121,7 @@ void DimensionSwitch::Block(SwitchBlock reason) {
 	if (reason == SwitchBlock::LowGauge) {
 		cout << "[전환 막힘] 게이지 " << Percent(gauge) << "% (" << Percent(enterMin) << "% 미만이라 3D로 못 갑니다)" << endl;
 	}
-	else cout << "[전환 막힘] 2D로 보면 발판·벽과 겹쳐서 2D로 못 돌아갑니다" << endl;
+	else cout << "[전환 막힘] 2D로 보면 발판·벽·가시와 겹쳐서 2D로 못 돌아갑니다" << endl;
 }
 
 // 경고는 3D에 있을 때만 켠다. 2D에서는 게이지가 차는 중이라 깜빡일 필요가 없다.
