@@ -2,14 +2,15 @@
 #include "Object.h"
 #include "Transform.h"
 #include "ViewTransition.h"
+#include "StageFlow.h"
 
 void BookWorm::Start() {
 	tr = gameObject->GetComponent<Transform>();
 	if (tr) startPos = tr->position;	// LevelLoader가 worm x y z 자리에 놓아 두었다
 
 	for (auto& obj : gameObject->ctx.Hierarchy) {
-		view = obj->GetComponent<ViewTransition>();
-		if (view) break;
+		if (!view) view = obj->GetComponent<ViewTransition>();
+		if (!stage) stage = obj->GetComponent<StageFlow>();
 	}
 }
 
@@ -20,6 +21,7 @@ void BookWorm::Update(float deltaTime) {
 
 	// 시점 전환 중에는 게임이 멈춘다(기획서 4.1) → 그 자리에 멈췄다가 전환이 끝나면 이어서 움직인다
 	if (view && view->IsTransitioning()) return;
+	if (stage && stage->IsStopped()) return;	// 스테이지 클리어 대기·엔딩도 같다(기획서 3.3)
 
 	vec3 pos = tr->position;
 	pos.x += dir * speed * deltaTime;
