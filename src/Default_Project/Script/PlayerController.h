@@ -7,6 +7,7 @@ using namespace glm;
 class Transform;
 class BoxCollider;
 class ViewTransition;
+class StageFlow;
 
 // ======================================================================
 //  플레이어 이동·점프와 차원별 충돌 (기획서 4.3, 5.1)
@@ -76,6 +77,7 @@ private:
 	BoxCollider* box = nullptr;
 	Object* viewObj = nullptr;
 	ViewTransition* view = nullptr;
+	StageFlow* stage = nullptr;		// 스테이지 클리어 대기·엔딩 동안은 멈춘다
 
 	vec3 velocity = vec3(0.0f);
 

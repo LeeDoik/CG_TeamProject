@@ -14,6 +14,7 @@
 #include "PlayerController.h"
 #include "MovingPlatform.h"
 #include "Checkpoint.h"
+#include "PageFragment.h"
 #include "Spike.h"
 #include "BookWorm.h"
 #include <fstream>
@@ -217,10 +218,11 @@ namespace {
 
 	// ---------------- 장면 만들기 ----------------
 
-	// 장면에 빈 오브젝트를 하나 만든다 (SceneLoader::Instantiate와 같다)
+	// 장면에 빈 오브젝트를 하나 만든다.
+	// Hierarchy가 아니라 pendingHierarchy에 넣는다. 이유는 LevelLoader.h 맨 위 설명(게임 도중 다음 레벨 불러오기)
 	Object* NewObject(AppContext& ctx, const string& name) {
-		ctx.Hierarchy.push_back(make_unique<Object>(ctx, name));
-		return ctx.Hierarchy.back().get();
+		ctx.pendingHierarchy.push_back(make_unique<Object>(ctx, name));
+		return ctx.pendingHierarchy.back().get();
 	}
 
 	// 중심 center, 크기 size인 큐브. Default_Cube.obj는 -1~1(한 변 2칸)이라 scale = size / 메시 크기.
@@ -330,6 +332,8 @@ bool LevelLoader::Parse(const string& file, LevelData& level) {
 }
 
 void LevelLoader::Build(AppContext& ctx, const LevelData& level) {
+	size_t firstNew = ctx.pendingHierarchy.size();	// 이번 Build가 만드는 오브젝트는 pendingHierarchy의 이 자리부터 쌓인다
+
 	// 고정 발판·벽: 큐브 + BoxCollider. Game_Scene.json의 Ground와 같은 구성이라 충돌은 엔진 그대로다
 	for (const LevelBox& b : level.blocks) {
 		Object* obj = CreateBox(ctx, "block:" + to_string(b.line), b.center, b.size, FindMaterial(b.material, level, b.line));
@@ -372,10 +376,13 @@ void LevelLoader::Build(AppContext& ctx, const LevelData& level) {
 		obj->AddComponent<Checkpoint>(c.position);
 	}
 
-	// 페이지 조각: 작은 주황 상자
-	// [연결 지점] 얻으면 스테이지 클리어 (기획서 5.3)
+	// 페이지 조각: 작은 주황 상자 (기획서 3.3·5.3)
+	//  체크포인트와 같이 닿음 판정에 쓸 트리거 충돌 상자를 붙인다. 트리거라서 플레이어를 막지 않는다.
+	//  닿으면 StageFlow가 조각을 숨기고 스테이지를 클리어한다
 	for (const LevelPoint& f : level.fragments) {
-		CreateOnFloor(ctx, "fragment:" + to_string(f.line), f.position, vec3(0.4f), materialChache["Orange"]);
+		Object* obj = CreateOnFloor(ctx, "fragment:" + to_string(f.line), f.position, vec3(0.4f), materialChache["Orange"]);
+		obj->AddComponent<BoxCollider>()->isTrigger = true;
+		obj->AddComponent<PageFragment>();
 	}
 
 	// 등불: 작은 노란 상자. 빛은 아직 내지 않는다
@@ -385,12 +392,17 @@ void LevelLoader::Build(AppContext& ctx, const LevelData& level) {
 	}
 
 	// hint, killY, theme, page, next, name, subtitle은 장면에 보이는 것이 없어 LevelInfo에만 둔다
-	// killY는 PlayerHealth가 읽는다(낙사, 기획서 4.4)
-	// [연결 지점] 힌트 구간 → 창 제목, 조각 획득 → next 레벨 (기획서 5.3)
+	// killY는 PlayerHealth가, page·next·name·subtitle은 StageFlow가 읽는다(기획서 3.3·4.4)
+	// [연결 지점] 힌트 구간 → 창 제목 (기획서 5.3)
 
 	if (level.hasStart) PlacePlayer(ctx, level);
 	else cout << "[레벨] 경고: " << level.file << "에 start가 없어 플레이어를 Game_Scene.json 위치에 둡니다" << endl;
 
 	Object* levelObj = NewObject(ctx, "Level");
-	levelObj->AddComponent<LevelInfo>()->data = level;
+	LevelInfo* info = levelObj->AddComponent<LevelInfo>();
+	info->data = level;
+
+	// 이번 Build가 만든 오브젝트를 적어 둔다. NewObject가 pendingHierarchy 끝에 차례로 넣었으므로 firstNew부터 끝까지가 모두 이번 것이다.
+	// 다음 레벨로 갈 때 StageFlow가 이 목록만 지우고 카메라·조명·플레이어는 남긴다.
+	for (size_t i = firstNew; i < ctx.pendingHierarchy.size(); ++i) info->objects.push_back(ctx.pendingHierarchy[i].get());
 }

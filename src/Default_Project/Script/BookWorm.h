@@ -5,6 +5,7 @@ using namespace glm;
 
 class Transform;
 class ViewTransition;
+class StageFlow;
 
 // ======================================================================
 //  책벌레 하나 (레벨 파일의 worm, 기획서 5.2)
@@ -14,7 +15,7 @@ class ViewTransition;
 //  바닥 위에서 처음 x ± range 안을 speed(칸/초)로 좌우 왕복한다. 처음에는 오른쪽(+x)으로 간다.
 //  여기는 움직이기만 한다. 플레이어와 닿았을 때(밟기 / 피해) 판단은 PlayerHealth가 한다
 //  (MovingPlatform은 움직이기만 하고 올라타기는 PlayerController가 하는 것과 같은 나눔).
-//  시점 전환 0.5초 동안은 게임이 멈추므로(기획서 4.1) 책벌레도 멈춘다.
+//  시점 전환 0.5초, 스테이지 클리어 대기 2초·엔딩 동안은 게임이 멈추므로(기획서 4.1, 3.3) 책벌레도 멈춘다.
 //  LevelLoader가 보라 상자 + 트리거 충돌 상자와 함께 붙인다. 트리거라서 플레이어를 막지 않는다.
 // ======================================================================
 class BookWorm : public Component {
@@ -38,6 +39,7 @@ public:
 private:
 	Transform* tr = nullptr;
 	ViewTransition* view = nullptr;
+	StageFlow* stage = nullptr;		// 스테이지 클리어 대기·엔딩 동안은 멈춘다
 	vec3 startPos = vec3(0.0f);		// 처음 위치(상자 중심). 왕복의 가운데이고 되살릴 자리
 	float dir = 1.0f;
 };

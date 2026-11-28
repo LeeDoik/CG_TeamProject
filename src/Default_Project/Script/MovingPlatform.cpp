@@ -4,6 +4,7 @@
 #include "BoxCollider.h"
 #include "ViewTransition.h"
 #include "PlayerController.h"
+#include "StageFlow.h"
 #include <cmath>
 #include <numbers>
 
@@ -17,6 +18,7 @@ void MovingPlatform::Start() {
 	for (auto& obj : gameObject->ctx.Hierarchy) {
 		if (!view) view = obj->GetComponent<ViewTransition>();
 		if (!player) player = obj->GetComponent<PlayerController>();
+		if (!stage) stage = obj->GetComponent<StageFlow>();
 	}
 }
 
@@ -25,6 +27,7 @@ void MovingPlatform::Update(float deltaTime) {
 
 	// 시점 전환 중에는 t를 늘리지 않는다 → 발판이 그 자리에 멈췄다가 전환이 끝나면 이어서 움직인다
 	if (view && view->IsTransitioning()) return;
+	if (stage && stage->IsStopped()) return;	// 스테이지 클리어 대기·엔딩도 같다
 
 	elapsed += deltaTime;
 	float wave = std::sin(2.0f * std::numbers::pi_v<float> * elapsed / period);

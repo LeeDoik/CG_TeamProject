@@ -6,6 +6,7 @@
 #include "ColliderManager.h"
 #include "ViewTransition.h"
 #include "Spike.h"
+#include "StageFlow.h"
 #include <algorithm>
 #include <cfloat>
 #include <cmath>
@@ -40,6 +41,11 @@ void PlayerController::Start() {
 		}
 	}
 
+	// 스테이지 흐름: 클리어 대기·엔딩이면 멈춘다
+	for (auto& obj : gameObject->ctx.Hierarchy) {
+		if (!stage) stage = obj->GetComponent<StageFlow>();
+	}
+
 	// 2D에서 z로 늘렸다가 3D에서 되돌릴 원래 크기
 	if (box) {
 		box->RecalculateCollision();
@@ -54,6 +60,9 @@ void PlayerController::Update(float deltaTime) {
 
 	// 0. 시점 전환 0.5초 동안은 게임이 멈춘다(기획서 4.1). 속도는 그대로 두었다가 전환이 끝나면 이어서 쓴다.
 	if (view && view->IsTransitioning()) return;
+
+	//    스테이지 클리어 대기 2초·엔딩 동안도 같은 방식으로 멈춘다(기획서 3.3 조작 정지).
+	if (stage && stage->IsStopped()) return;
 
 	// 움직이기 전 발 높이를 적어 둔다. PlayerHealth가 "직전에 책벌레 윗면보다 위에 있었나"(밟기)를 볼 때 쓴다.
 	footYBeforeMove = GetFootPosition().y;

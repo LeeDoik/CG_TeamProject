@@ -9,6 +9,7 @@ class DimensionSwitch;
 class ViewTransition;
 class BoxCollider;
 class Checkpoint;
+class StageFlow;
 class BookWorm;
 
 // ======================================================================
@@ -47,6 +48,7 @@ public:
 	void TakeDamage(bool toCheckpoint, float knockbackDir = 0.0f);
 	void ReturnToCheckpoint();			// HP는 그대로 두고 마지막 체크포인트로, 게이지 가득 (게이지 0 + 2D 복귀 불가, DimensionSwitch가 부른다)
 	void RestartStage();				// HP 3, 켜진 깃발을 끄고 처치한 책벌레를 되살려 start로 (게임 오버의 [다시 시작]이 부를 함수)
+	void ResetForNewLevel();			// 다음 레벨을 불러온 뒤: 새 깃발·killY·start를 찾고 HP 3 (StageFlow가 부른다, 기획서 3.3)
 
 	// ---- UI·소리·화면 흐름이 읽는 값 ----
 	//  DimensionSwitch::GetBlockedCount처럼 매 프레임 읽고, 횟수가 바뀐 프레임에 효과음·연출을 낸다.
@@ -66,6 +68,7 @@ private:
 	DimensionSwitch* dimension = nullptr;	// 체크포인트로 돌아갈 때 3D 게이지를 채운다
 	BoxCollider* box = nullptr;
 	ViewTransition* view = nullptr;
+	StageFlow* stage = nullptr;			// 스테이지 클리어 대기·엔딩 동안은 검사를 멈춘다
 	vector<Checkpoint*> flags;			// 레벨의 체크포인트 깃발들
 	vector<BoxCollider*> spikes;		// 레벨의 가시 상자들
 	vector<BookWorm*> worms;			// 레벨의 책벌레들

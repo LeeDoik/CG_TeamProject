@@ -6,6 +6,7 @@ using namespace glm;
 
 class PlayerController;
 class PlayerHealth;
+class StageFlow;
 
 // 전환이 막힌 이유 (UI·소리 담당이 이유마다 다르게 보여 주고 싶을 때 쓴다)
 enum class SwitchBlock {
@@ -58,6 +59,7 @@ private:
 	PlayerController* player = nullptr;
 	PlayerHealth* health = nullptr;		// 게이지 0 + 2D 복귀 불가일 때 마지막 체크포인트로 보낸다
 	ViewTransition* view = nullptr;
+	StageFlow* stage = nullptr;			// 스테이지 클리어 대기·엔딩 동안은 게이지와 E를 멈춘다
 
 	float gauge = 1.0f;					// 처음에는 가득 차 있다
 	int blockedCount = 0;

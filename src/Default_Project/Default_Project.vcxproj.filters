@@ -183,6 +183,12 @@
     <ClInclude Include="Script\MovingPlatform.h">
       <Filter>Script</Filter>
     </ClInclude>
+    <ClInclude Include="Script\PageFragment.h">
+      <Filter>Script</Filter>
+    </ClInclude>
+    <ClInclude Include="Script\StageFlow.h">
+      <Filter>Script</Filter>
+    </ClInclude>
     <ClInclude Include="Utility\LevelLoader.h">
       <Filter>Utility\Header</Filter>
     </ClInclude>
@@ -288,6 +294,9 @@
       <Filter>Script</Filter>
     </ClCompile>
     <ClCompile Include="Script\MovingPlatform.cpp">
+      <Filter>Script</Filter>
+    </ClCompile>
+    <ClCompile Include="Script\StageFlow.cpp">
       <Filter>Script</Filter>
     </ClCompile>
     <ClCompile Include="Utility\LevelLoader.cpp">

@@ -18,4 +18,9 @@ void Game_Scene::LoadScene(AppContext& ctx) {
 		LevelLoader levelLoader{};
 		levelLoader.Load(ctx, levelFile);
 	}
+
+	// 3. LevelLoader는 새 오브젝트를 pendingHierarchy에 넣는다(게임 도중 다음 레벨을 불러올 때를 위해, LevelLoader.h 설명).
+	//    지금은 게임 루프 전이라 바로 Hierarchy로 옮긴다. 그래야 첫 프레임 Start에서 PlayerHealth·StageFlow가 깃발·조각을 찾는다.
+	for (auto& obj : ctx.pendingHierarchy) ctx.Hierarchy.push_back(move(obj));
+	ctx.pendingHierarchy.clear();
 }

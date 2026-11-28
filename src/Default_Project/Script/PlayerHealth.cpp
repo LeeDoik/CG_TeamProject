@@ -8,6 +8,7 @@
 #include "Spike.h"
 #include "BookWorm.h"
 #include "LevelLoader.h"
+#include "StageFlow.h"
 #include <algorithm>
 
 void PlayerHealth::Start() {
@@ -19,6 +20,7 @@ void PlayerHealth::Start() {
 	// 장면에서 시점 전환 카메라, 체크포인트 깃발, 가시, 책벌레, 레벨 정보(killY)를 찾는다
 	for (auto& obj : gameObject->ctx.Hierarchy) {
 		if (!view) view = obj->GetComponent<ViewTransition>();
+		if (!stage) stage = obj->GetComponent<StageFlow>();
 		if (Checkpoint* flag = obj->GetComponent<Checkpoint>()) flags.push_back(flag);
 		if (obj->GetComponent<Spike>()) {
 			if (BoxCollider* spikeBox = obj->GetComponent<BoxCollider>()) spikes.push_back(spikeBox);
@@ -48,6 +50,9 @@ void PlayerHealth::Update(float deltaTime) {
 
 	// 시점 전환 0.5초 동안은 게임이 멈춘다(기획서 4.1). 플레이어가 움직이지 않으니 검사도 쉬고 무적 시간도 멈춘다.
 	if (view && view->IsTransitioning()) return;
+
+	// 스테이지 클리어 대기 2초·엔딩 동안도 게임이 멈춘다(기획서 3.3). 플레이어가 멈춰 있어 피해도 받지 않는다.
+	if (stage && stage->IsStopped()) return;
 
 	// 1. 무적 시간 줄이기 (적·가시에 맞은 뒤 1초)
 	invincibleTimer = std::max(0.0f, invincibleTimer - deltaTime);
@@ -233,6 +238,19 @@ void PlayerHealth::RestartStage() {
 	for (BookWorm* worm : worms) worm->Revive();
 	cout << "[HP] 스테이지를 처음부터 다시 합니다 (HP " << hp << ")" << endl;
 	ReturnToCheckpoint();
+}
+
+// 다음 레벨을 불러온 뒤 StageFlow가 부른다 (기획서 3.3 "다음 스테이지로 간다. HP는 3으로 회복한다")
+//  새 레벨에서 할 일은 Start와 같다: 장면에서 깃발·가시·책벌레와 레벨 정보(killY)를 다시 찾고, HP 3, 새 start를 마지막 체크포인트로.
+//  지난 레벨의 깃발·가시·책벌레는 이미 지워졌으므로 목록부터 비운다(지운 오브젝트를 가리키는 포인터가 남지 않게).
+//  LevelLoader가 플레이어를 새 start에 옮겨 둔 뒤(새 레벨이 장면에 다 들어왔을 때) 불리므로 Start가 지금 발 위치를 start로 적는다.
+void PlayerHealth::ResetForNewLevel() {
+	flags.clear();
+	spikes.clear();
+	worms.clear();
+	invincibleTimer = 0.0f;
+	Start();
+	cout << "[HP] 다음 스테이지: HP " << hp << ", 체크포인트 = start (" << checkpoint.x << ", " << checkpoint.y << ", " << checkpoint.z << ")" << endl;
 }
 
 Component* PlayerHealth::CreateFromJson(Object* obj, const json& props, const map<string, Object*>& spawnedObjects) {

@@ -83,6 +83,22 @@
           "properties": { "folder": "Assets/Characters/PaperChild/", "walkFps": 8.0 }
         }
       ]
+    },
+    {
+      "isValid": true,
+      "name": "Stage",
+      "parent": "",
+      "transform": {
+        "position": [ 0.0, 0.0, 0.0 ],
+        "rotation": [ 0.0, 0.0, 0.0 ],
+        "scale": [ 1.0, 1.0, 1.0 ]
+      },
+      "components": [
+        {
+          "type": "StageFlow",
+          "properties": { "clearWait": 2.0, "totalPages": 4 }
+        }
+      ]
     }
   ]
 }
