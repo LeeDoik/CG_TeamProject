@@ -1,0 +1,24 @@
+# 조각·스테이지 클리어·다음 레벨 시험 1/3 (기획서 3.3)
+# test_page1 → test_page2 → test_page3 → 엔딩. Game_Scene.h의 levelFile을 이 파일로 바꾸면 처음부터 이어서 시험할 수 있다.
+# 조각(fragment)에 닿으면 STAGE CLEAR. 2초 동안 게임이 멈췄다가 next 레벨로 간다. 콘솔에 [조각]·[스테이지] 줄이 나온다.
+# 좌표: x 오른쪽, y 위, z 화면 쪽(+). 바닥 윗면이 y 0. block의 x y z는 중심, start·checkpoint·fragment의 y는 바닥(발) 기준.
+# 확인할 것: 구덩이에 한 번 떨어져 HP를 줄이고, E로 3D를 켜 게이지를 쓰는 채로 조각을 얻는다
+#  → 다음 레벨(test_page2)에서 HP 3, 게이지 100%, 2D, 마지막 체크포인트가 그 레벨의 start여야 한다.
+
+name 시험 페이지 1
+subtitle TEST PAGE ONE
+page 1
+next test_page2.txt
+theme day
+killY -6
+start 0 0 0
+
+# 바닥 A(x -2 ~ 10), 구덩이(x 10 ~ 12, 폭 2), 바닥 B(x 12 ~ 22)
+block 4 -0.5 0 12 1 6 Paper
+block 17 -0.5 0 10 1 6 Paper
+checkpoint 4 0 0
+hint -2 10 구덩이에 한 번 떨어져 보세요(HP -1). 그다음 E로 3D를 켜고 건너가 조각을 얻으세요
+
+# 조각: 바닥 B 위, 기본 줄(z 0). 3D에서도 깊이를 움직이지 않았으면 그대로 닿는다
+fragment 18 0 0
+hint 12 22 조각에 닿으면 STAGE CLEAR, 2초 뒤 다음 페이지로 갑니다

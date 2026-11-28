@@ -1,0 +1,15 @@
+# 조각·스테이지 클리어·다음 레벨 시험 3/3 (기획서 3.3)
+# next가 없다 → 이 조각을 얻으면 STAGE CLEAR 2초 뒤 엔딩이다.
+# 콘솔에 "[엔딩] 조각 3/4, 클리어 시간 …"이 나온다(시험 레벨은 page 1·2·3 세 개라 3/4).
+
+name 시험 페이지 3
+subtitle TEST PAGE THREE
+page 3
+theme sunset
+killY -6
+start 0 0 0
+
+# 바닥(x -2 ~ 10)
+block 4 -0.5 0 12 1 6 Paper
+fragment 6 0 0
+hint -2 10 마지막 페이지입니다. 조각을 얻으면 엔딩
